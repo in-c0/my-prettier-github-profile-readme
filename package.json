@@ -1,7 +1,7 @@
 {
-  "name": "@in-c0/profile-atlas",
+  "name": "@in-c0/my-prettier-github-profile-readme",
   "version": "0.1.0",
-  "description": "A framework-free GitHub profile gallery, index, and timeline Web Component.",
+  "description": "A framework-free Web UI library for interactive GitHub profile galleries, timelines, stories and project showcases.",
   "type": "module",
   "main": "./src/profile-atlas.js",
   "module": "./src/profile-atlas.js",
@@ -17,6 +17,7 @@
     "custom-elements",
     "github",
     "profile",
+    "readme",
     "gallery",
     "timeline",
     "portfolio"
