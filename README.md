@@ -1,6 +1,6 @@
-# Profile Atlas
+# my prettier github profile readme: web UI library
 
-[![Explore the current Profile Atlas showcase — projects, public activity, and found ideas](assets/showcase-banner.svg)](https://profile-atlas-showcase.wldud5192.chatgpt.site/)
+[![Explore the interactive GitHub profile showcase — projects, public activity, and found ideas](assets/showcase-banner.svg)](https://profile-atlas-showcase.wldud5192.chatgpt.site/)
 
 [Explore the interactive version](https://profile-atlas-showcase.wldud5192.chatgpt.site/) · *Static banner linking to the live interactive showcase.*
 
@@ -14,7 +14,7 @@ The deployed Site (and its equivalent repository demo) now uses `demo/index.html
 
 The activity section supports **This week / This month / This year / Past 5 years / All**, category filtering and per-period record lists. Repeated same-day push events are grouped for readability without changing recorded counts. Monthly counts are separately selectable. Month-only historical snapshots are never assigned fabricated days or names.
 
-The original custom elements remain in `src/` and are still available for other sites. The appearance and behavior below describe those optional reusable components, not the current homepage.
+The original `<profile-atlas>` custom element is retained as a backwards-compatible component API; its tag and source filenames are intentionally unchanged. The appearance and behavior below describe those optional reusable components, not the current homepage.
 
 ## Reusable components (original design)
 
@@ -87,6 +87,6 @@ Image paths may be absolute HTTPS URLs or relative to the manifest JSON file (fo
 
 ## GitHub profile README
 
-GitHub profile READMEs cannot execute JavaScript. Embed `assets/profile-atlas-preview.gif` as a linked image, and point it at the live interactive Atlas. Rebuild the compact animated illustration with `python scripts/make_readme_preview.py` (requires Pillow). The GitHub six-pin limit is independent of what you can display on the hosted page.
+GitHub profile READMEs cannot execute JavaScript. Embed `assets/showcase-banner.svg` as a linked image, and point it at the live interactive showcase. An older animated preview can still be rebuilt with `python scripts/make_readme_preview.py` (requires Pillow). The GitHub six-pin limit is independent of what you can display on the hosted page.
 
 MIT licensed. This release is an early public Web Component prototype; automated cross-browser interaction tests, package publishing, and static pre-generated feed support are future work.
