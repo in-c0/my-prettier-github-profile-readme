@@ -5,7 +5,7 @@ on:
     - cron: '23 19 * * *' # daily, ~6am Sydney
   workflow_dispatch:
   push:
-    branches: [main, 'redesign/**']
+    branches: [main]
     paths: [profile.config.json, index.html, src/**, scripts/**, assets/**, site/**, .github/workflows/cards.yml]
 
 permissions:

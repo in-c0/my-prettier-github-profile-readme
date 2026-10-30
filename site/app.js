@@ -115,6 +115,8 @@ function previewBlock({ draw, readme, js, controls, onStageClick }) {
       if (typeof content === 'string') stage.innerHTML = content; else stage.append(content);
       if (onStageClick) stage.addEventListener('click', e => { if (!e.target.closest('a')) onStageClick(ctx, redraw); });
       body.append(stage);
+      // On narrow screens the arrow scrolls; start at 'now', where the recent activity is.
+      requestAnimationFrame(() => { stage.scrollLeft = stage.scrollWidth; });
     } else {
       const text = ctx.tab === 'readme' ? readme() : js();
       body.append(h('div', { class: 'code' }, h('pre', {}, text), copyButton(() => text)));
@@ -140,17 +142,17 @@ function legend() {
 
 /* ---------- pages ---------- */
 const pages = {
-  '/': () => {
+  intro: () => {
     const username = state.config?.username || 'in-c0';
     const featured = (state.config?.projects || []).slice(0, 3);
     return h('div', { class: 'page' },
       h('section', { class: 'hero' },
-        h('span', { class: 'badge' }, h('i'), state.live ? 'Live data · refreshed daily' : 'Sample data'),
+        h('span', { class: 'badge' }, h('i'), window.__PP_INLINE?.badge || (state.live ? 'Live data · refreshed daily' : 'Sample data')),
         h('h1', {}, 'A prettier profile README.'),
         h('p', { class: 'lead' }, 'Three components, rendered as SVG and refreshed by a GitHub Action. Paste one block of markdown and they work on github.com.'),
         h('div', { class: 'actions' },
-          h('a', { class: 'btn primary', href: '#/readme' }, 'Embed in README'),
-          h('a', { class: 'btn', href: '#/components/activity' }, 'Browse components'))),
+          h('a', { class: 'btn primary', href: '#readme' }, 'Embed in README'),
+          h('a', { class: 'btn', href: '#activity' }, 'Browse components'))),
       previewBlock({
         draw: theme => {
           const wrap = h('div', { style: 'display:grid;gap:12px;width:100%;max-width:840px' });
@@ -161,10 +163,10 @@ const pages = {
         readme: () => readmeSnippet(),
         js: () => jsSnippet('all')
       }),
-      h('p', { class: 'prose', style: 'font-size:13px;color:var(--muted)' }, `Showing @${username}. `, h('a', { href: '#/config', style: 'text-decoration:underline' }, 'Use your own profile →')));
+      h('p', { class: 'prose', style: 'font-size:13px;color:var(--muted)' }, `Showing @${username}. `, h('a', { href: '#config', style: 'text-decoration:underline' }, 'Use your own profile →')));
   },
 
-  '/readme': () => h('div', { class: 'page' },
+  'readme': () => h('div', { class: 'page' },
     h('div', { class: 'crumbs' }, 'Getting started'),
     h('h1', {}, 'Embed in README'),
     h('p', { class: 'lead' }, 'GitHub READMEs can’t run JavaScript, so a daily Action renders each component to SVG and publishes it to an output branch.'),
@@ -173,13 +175,13 @@ const pages = {
         h('p', { class: 'prose' }, 'In any repository you own (this one, a fork, or your ', h('code', {}, 'username/username'), ' repo):'),
         codeBlock('.github/workflows/profile-cards.yml', workflowSnippet())),
       h('li', {}, h('h3', {}, 'Describe your profile'),
-        h('p', { class: 'prose' }, 'Projects, header counters and what the activity arrow labels. See ', h('a', { href: '#/config', style: 'text-decoration:underline' }, 'Configuration'), '.'),
+        h('p', { class: 'prose' }, 'Projects, header counters and what the activity arrow labels. See ', h('a', { href: '#config', style: 'text-decoration:underline' }, 'Configuration'), '.'),
         codeBlock('profile.config.json', configSnippet())),
       h('li', {}, h('h3', {}, 'Paste into your profile README'),
         h('p', { class: 'prose' }, 'Each card follows GitHub’s light or dark theme and links where you point it.'),
         codeBlock('README.md', readmeSnippet())))),
 
-  '/config': () => h('div', { class: 'page' },
+  'config': () => h('div', { class: 'page' },
     h('div', { class: 'crumbs' }, 'Getting started'),
     h('h1', {}, 'Configuration'),
     h('p', { class: 'lead' }, 'One JSON file next to the workflow. Everything is optional except the username.'),
@@ -195,7 +197,7 @@ const pages = {
       ['projects[]', 'object[]', 'id, title, summary, url, tag, repo, image (path or https URL).']
     ])),
 
-  '/components/header': () => componentPage({
+  'header': () => componentPage({
     title: 'Profile header',
     lead: 'Avatar, name, one line and three counters. 840 × 112.',
     block: previewBlock({ draw: theme => headerSVG(theme), readme: () => picture('header', state.config?.name || 'Profile', state.config?.site || '#', '100%'), js: () => jsSnippet('header') }),
@@ -207,7 +209,7 @@ const pages = {
     ]
   }),
 
-  '/components/project': () => componentPage({
+  'project': () => componentPage({
     title: 'Project card',
     lead: 'Screenshot or typographic cover, title, two lines, domain. 272 × 220, three per row.',
     block: previewBlock({
@@ -224,7 +226,7 @@ const pages = {
     ]
   }),
 
-  '/components/activity': () => {
+  'activity': () => {
     let range = state.config?.activity?.range || '12m';
     const order = Object.keys(RANGES);
     return componentPage({
@@ -324,19 +326,20 @@ function jsSnippet(kind) {
 /* ---------- router ---------- */
 function render() {
   uid = 0;
-  const path = (location.hash.replace(/^#/, '') || '/');
-  const page = pages[path] || pages['/'];
+  const path = location.hash.replace(/^#\/?/, '').split('/').pop() || 'intro';
+  const page = pages[path] || pages.intro;
   for (const a of document.querySelectorAll('.sidebar a')) {
-    if (a.getAttribute('href') === '#' + path) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    if (a.getAttribute('href') === '#' + (pages[path] ? path : 'intro')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   }
   $('#page').replaceChildren(state.data ? page() : h('p', { class: 'lead' }, 'Loading…'));
 }
 addEventListener('hashchange', () => { render(); scrollTo(0, 0); });
 
-const [data, config] = await Promise.all([
-  loadJSON('data/activity.json', 'data/sample-activity.json'),
-  loadJSON('profile.config.json')
-]);
+// A bundled single-file build can inline its data instead of fetching it.
+const inline = window.__PP_INLINE;
+const [data, config] = inline
+  ? [{ json: inline.data, url: inline.live ? 'data/activity.json' : '' }, { json: inline.config }]
+  : await Promise.all([loadJSON('data/activity.json', 'data/sample-activity.json'), loadJSON('profile.config.json')]);
 state.data = data.json || { user: {}, events: [] };
 state.live = data.url === 'data/activity.json';
 state.config = config.json || { username: state.data.user?.login };

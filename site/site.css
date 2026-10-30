@@ -36,8 +36,8 @@ code, pre { font-family: var(--mono); }
 
 /* Top bar */
 .topbar {
-  position: sticky; top: 0; z-index: 10; height: 56px; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px);
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; height: 56px; display: flex; align-items: center; justify-content: space-between;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
 .brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: -0.01em; }
@@ -147,8 +147,8 @@ td:first-child { white-space: nowrap; color: var(--fg); }
   .nav-group { flex-direction: row; margin: 0; }
   .nav-group > span { display: none; }
   .nav-group a { white-space: nowrap; }
-  main { padding: 28px 16px 72px; }
-  .topbar { padding: 0 16px; }
+  main { padding-block: 28px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .topbar { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .toplinks > a:not(.icon-link) { display: none; }
   .hero h1 { font-size: 32px; }
   .stage { padding: 24px 12px; min-height: 0; }
