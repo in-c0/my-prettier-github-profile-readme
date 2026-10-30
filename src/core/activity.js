@@ -5,8 +5,9 @@ import { esc, round, textWidth, truncate, frame, GLYPH } from './svg.js';
 
 export const TYPES = ['repo', 'fork', 'star', 'commit'];
 export const RANGES = {
-  '30d': { label: 'Past 30 days', grain: 'day' },
-  '12m': { label: 'Past 12 months', grain: 'week' },
+  '30d': { label: 'Past 30 days', grain: 'day', count: 30 },
+  '3m': { label: 'Past 3 months', grain: 'day', count: 91 },
+  '12m': { label: 'Past 12 months', grain: 'week', count: 52 },
   all: { label: 'All time', grain: 'month' }
 };
 
@@ -20,17 +21,21 @@ const fmtDay = ms => { const d = new Date(ms); return MONTHS[d.getUTCMonth()] + 
 const fmtMonth = ms => { const d = new Date(ms); return MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
 const weight = e => e.type === 'commit' ? Math.max(1, Number(e.count) || 1) : 1;
 
-export function bucketize(events, { range = '12m', now } = {}) {
-  const today = utcDay(now || Date.now());
-  const grain = (RANGES[range] || RANGES['12m']).grain;
-  const valid = (events || []).filter(e => TYPES.includes(e.type) && e.date && !Number.isNaN(utcDay(e.date)));
+// `end` (a date inside the last bucket) slides a fixed-length window back in time.
+// `includePrivate: false` drops events marked { private: true }.
+export function bucketize(events, { range = '12m', now, end, includePrivate = true } = {}) {
+  const realToday = utcDay(now || Date.now());
+  const today = end ? Math.min(realToday, utcDay(end)) : realToday;
+  const spec = RANGES[range] || RANGES['12m'];
+  const grain = spec.grain;
+  const valid = (events || []).filter(e => TYPES.includes(e.type) && e.date && !Number.isNaN(utcDay(e.date)) && (includePrivate || !e.private));
   let starts = [];
   if (grain === 'day') {
-    for (let i = 29; i >= 0; i--) starts.push(today - i * DAY);
+    for (let i = spec.count - 1; i >= 0; i--) starts.push(today - i * DAY);
   } else if (grain === 'week') {
     const dow = (new Date(today).getUTCDay() + 6) % 7; // Monday = 0
     const thisWeek = today - dow * DAY;
-    for (let i = 51; i >= 0; i--) starts.push(thisWeek - i * 7 * DAY);
+    for (let i = spec.count - 1; i >= 0; i--) starts.push(thisWeek - i * 7 * DAY);
   } else {
     const first = valid.length ? Math.min(...valid.map(e => utcDay(e.date))) : today;
     const f = new Date(first), t = new Date(today);
@@ -45,7 +50,7 @@ export function bucketize(events, { range = '12m', now } = {}) {
   const buckets = starts.map((start, i) => ({
     start,
     end: i + 1 < starts.length ? starts[i + 1] : today + DAY,
-    counts: { repo: 0, fork: 0, star: 0, commit: 0 },
+    counts: { repo: 0, fork: 0, star: 0, commit: 0, privateCommit: 0 },
     items: []
   }));
   const from = buckets[0].start, to = buckets[buckets.length - 1].end;
@@ -56,15 +61,18 @@ export function bucketize(events, { range = '12m', now } = {}) {
     let lo = 0, hi = buckets.length - 1;
     while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (buckets[mid].start <= d) lo = mid; else hi = mid - 1; }
     buckets[lo].counts[e.type] += weight(e);
+    if (e.private && e.type === 'commit') buckets[lo].counts.privateCommit += weight(e);
     buckets[lo].items.push(e);
   }
-  const totals = { repo: 0, fork: 0, star: 0, commit: 0 };
-  for (const b of buckets) for (const k of TYPES) totals[k] += b.counts[k];
-  return { range, grain, from, to, today, buckets, totals };
+  const totals = { repo: 0, fork: 0, star: 0, commit: 0, privateCommit: 0 };
+  for (const b of buckets) for (const k of Object.keys(totals)) totals[k] += b.counts[k];
+  const first = valid.length ? Math.min(...valid.map(e => utcDay(e.date))) : realToday;
+  return { range, grain, from, to, today, isNow: today === realToday, first, buckets, totals };
 }
 
 function defaultLabel(e, featured) {
   const name = String(e.repo || '').split('/').pop();
+  if (e.private) return null;
   if (e.type === 'repo') return !featured || featured.has(e.repo) || featured.has(name) ? name : null;
   if (e.type === 'fork') return name;
   return null;
@@ -95,7 +103,10 @@ export function renderActivity(data, opts = {}) {
   const t = theme(opts.theme);
   const width = opts.width || 840, height = opts.height || 252;
   const range = RANGES[opts.range] ? opts.range : '12m';
-  const model = bucketize(data?.events, { range, now: opts.now || data?.generatedAt });
+  const model = bucketize(data?.events, { range, now: opts.now || data?.generatedAt, end: opts.end, includePrivate: opts.includePrivate !== false });
+  const yearOf = ms => new Date(ms).getUTCFullYear();
+  const rangeLabel = model.isNow || range === 'all' ? RANGES[range].label
+    : `${fmtDay(model.from)}${yearOf(model.from) !== yearOf(model.today) ? ' ' + yearOf(model.from) : ''} – ${fmtDay(model.today)} ${yearOf(model.today)}`;
   const featured = opts.featured ? new Set(opts.featured) : null;
   const label = opts.label || (e => defaultLabel(e, featured));
   const animate = opts.animate !== false;
@@ -109,17 +120,22 @@ export function renderActivity(data, opts = {}) {
 
   // Header: title, range, legend.
   parts.push(`<text x="${P}" y="38" font-size="14" font-weight="600">${esc(opts.title || 'Activity')}</text>`);
-  parts.push(`<text x="${P + textWidth(opts.title || 'Activity', 14) + 10}" y="38" font-size="12" class="muted">${esc(RANGES[range].label)}</text>`);
+  parts.push(`<text x="${P + textWidth(opts.title || 'Activity', 14) + 10}" y="38" font-size="12" class="muted">${esc(rangeLabel)}</text>`);
   let lx = width - P;
   const legend = [];
-  for (const k of ['commit', 'star', 'fork', 'repo']) {
-    const txt = `${model.totals[k].toLocaleString('en-US')} ${TYPE_META[k].plural}`;
+  const keys = ['commit', 'star', 'fork', 'repo'];
+  if (model.totals.privateCommit) keys.unshift('privateCommit');
+  for (const k of keys) {
+    const txt = k === 'privateCommit' ? `${model.totals.privateCommit.toLocaleString('en-US')} private`
+      : `${model.totals[k].toLocaleString('en-US')} ${TYPE_META[k].plural}`;
     const w = textWidth(txt, 11, true);
     lx -= w;
     legend.push(`<text x="${round(lx)}" y="38" font-size="11" class="mono muted">${esc(txt)}</text>`);
     lx -= 10;
-    legend.push(`<g transform="translate(${round(lx)} 34)" fill="${t[k]}">${k === 'commit' ? `<rect x="-2" y="-4.5" width="4" height="9" rx="1"/>` : GLYPH[k](4)}</g>`);
-    lx -= 18;
+    const sw = k === 'commit' || k === 'privateCommit'
+      ? `<rect x="-2" y="-4.5" width="4" height="9" rx="1"${k === 'privateCommit' ? ' fill-opacity=".38"' : ''}/>` : GLYPH[k](4);
+    legend.push(`<g transform="translate(${round(lx)} 34)" fill="${t[k === 'privateCommit' ? 'commit' : k]}">${sw}</g>`);
+    lx -= k === 'commit' && model.totals.privateCommit ? 12 : 18;
   }
   parts.push(legend.join(''));
 
@@ -127,11 +143,12 @@ export function renderActivity(data, opts = {}) {
   const len = round(X1 + 10 - (P - 2));
   parts.push(`<path class="axis" d="M${P - 2} ${axisY}H${X1 + 10}" stroke="${t.axis}" stroke-width="1.25" fill="none" stroke-dasharray="${len}" stroke-dashoffset="${animate ? len : 0}"/>`);
   parts.push(`<path class="head" d="M${X1 + 4} ${axisY - 5}L${X1 + 11} ${axisY}L${X1 + 4} ${axisY + 5}" stroke="${t.axis}" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`);
-  parts.push(`<text x="${X1 + 12}" y="${height - 22}" font-size="10" class="mono" text-anchor="end">now</text>`);
+  parts.push(`<text x="${X1 + 12}" y="${height - 22}" font-size="10" class="mono" text-anchor="end">${model.isNow ? 'now' : esc(fmtDay(model.today))}</text>`);
 
   // Ticks.
   for (const tick of tickLabels(model)) {
     const x = round(X0 + bw * tick.i);
+    if (x > X1 - (model.isNow ? 24 : 52)) continue; // keep clear of the label at the tip
     parts.push(`<line x1="${x}" y1="${axisY}" x2="${x}" y2="${axisY + 4}" stroke="${t.axis}" stroke-width="1"/>`);
     parts.push(`<text x="${x + 3}" y="${height - 22}" font-size="10" class="mono ${tick.strong ? '' : 'subtle'}">${esc(tick.text)}</text>`);
   }
@@ -157,9 +174,13 @@ export function renderActivity(data, opts = {}) {
     if (b.counts.commit) {
       const h = round(3 + Math.sqrt(b.counts.commit / maxCommit) * 34);
       const w = round(Math.max(2, Math.min(6, bw * 0.46)));
-      g.push(`<rect class="bar" style="animation-delay:${d}ms" x="${round(x - w / 2)}" y="${axisY + 5}" width="${w}" height="${h}" rx="1" fill="${t.commit}"/>`);
+      const ph = round(h * b.counts.privateCommit / b.counts.commit);
+      g.push(`<g class="bar" style="animation-delay:${d}ms" fill="${t.commit}">` +
+        (h - ph > 0 ? `<rect x="${round(x - w / 2)}" y="${axisY + 5}" width="${w}" height="${round(h - ph)}" rx="1"/>` : '') +
+        (ph > 0 ? `<rect x="${round(x - w / 2)}" y="${round(axisY + 5 + h - ph)}" width="${w}" height="${ph}" rx="1" fill-opacity=".38"/>` : '') + `</g>`);
     }
     const parts2 = TYPES.filter(k => b.counts[k]).map(k => `${b.counts[k]} ${b.counts[k] === 1 ? TYPE_META[k].label.toLowerCase() : TYPE_META[k].plural}`);
+    if (b.counts.privateCommit) parts2.push(`${b.counts.privateCommit} of them private`);
     const when = model.grain === 'day' ? fmtDay(b.start) : model.grain === 'week' ? 'Week of ' + fmtDay(b.start) : fmtMonth(b.start);
     if (g.length) parts.push(`<g class="bucket" data-i="${i}"><title>${esc(when + (parts2.length ? ' · ' + parts2.join(', ') : ''))}</title><rect x="${round(x - bw / 2)}" y="${P + 40}" width="${round(bw)}" height="${axisY - P}" fill="transparent"/>${g.join('')}</g>`);
   });
@@ -209,6 +230,6 @@ export function renderActivity(data, opts = {}) {
       `${s} .callout{opacity:0;animation:pp-fade .4s ease-out forwards}` +
       `@keyframes pp-draw{to{stroke-dashoffset:0}}@keyframes pp-fade{to{opacity:1}}@keyframes pp-pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}@keyframes pp-grow{to{transform:scaleY(1)}}`
     : '';
-  const desc = `${RANGES[range].label}: ${model.totals.commit} commits, ${model.totals.star} stars, ${model.totals.fork} forks, ${model.totals.repo} new repositories.`;
+  const desc = `${rangeLabel}: ${model.totals.commit} commits, ${model.totals.star} stars, ${model.totals.fork} forks, ${model.totals.repo} new repositories.`;
   return frame({ id: opts.id, width, height, t, css, animate, title: opts.title || 'GitHub activity', desc, body: parts.join(''), border: opts.border !== false });
 }

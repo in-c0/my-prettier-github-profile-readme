@@ -15,7 +15,7 @@ const events = [
 test('12m uses 52 weekly buckets and counts commit weight', () => {
   const m = bucketize(events, { range: '12m', now });
   assert.equal(m.buckets.length, 52);
-  assert.deepEqual(m.totals, { repo: 1, fork: 1, star: 1, commit: 7 });
+  assert.deepEqual(m.totals, { repo: 1, fork: 1, star: 1, commit: 7, privateCommit: 0 });
 });
 
 test('30d uses daily buckets ending today', () => {
@@ -43,4 +43,25 @@ test('renderers return self-contained SVG with scoped styles', () => {
     const id = svg.match(/id="([a-z0-9]+)"/)[1];
     assert.ok(svg.includes(`#${id} text{`));
   }
+});
+
+test('end slides the window back and private events can be dropped', () => {
+  const withPrivate = [...events, { type: 'commit', date: '2026-10-27', count: 5, private: true }];
+  const past = bucketize(withPrivate, { range: '3m', now, end: '2024-02-15' });
+  assert.equal(past.buckets.length, 91);
+  assert.equal(past.isNow, false);
+  assert.equal(past.totals.commit, 3);
+  const on = bucketize(withPrivate, { range: '12m', now });
+  assert.equal(on.totals.privateCommit, 5);
+  assert.equal(bucketize(withPrivate, { range: '12m', now, includePrivate: false }).totals.commit, 7);
+});
+
+test('gallery layout ends every column on the same edge', async () => {
+  const { layoutGallery } = await import('../src/core/gallery.js');
+  const items = [[400, 700], [400, 200], [400, 400], [400, 600], [400, 300], [400, 500]].map(([width, height], i) => ({ title: 't' + i, width, height }));
+  const { tiles } = layoutGallery(items, { columns: 3 });
+  const bottoms = new Map();
+  for (const t of tiles) bottoms.set(t.x, Math.max(bottoms.get(t.x) || 0, t.y + t.h));
+  const values = [...bottoms.values()];
+  assert.ok(Math.max(...values) - Math.min(...values) < 0.01);
 });

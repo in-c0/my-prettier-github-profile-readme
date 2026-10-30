@@ -1,25 +1,44 @@
 {
   "name": "@in-c0/my-prettier-github-profile-readme",
   "version": "0.2.0",
-  "description": "README-ready GitHub profile components: profile header, project cards and an activity arrow timeline, rendered as SVG.",
+  "description": "README-ready GitHub profile cards: header, projects, activity arrow and gallery, rendered as SVG.",
   "type": "module",
   "main": "./src/core/index.js",
   "exports": {
     ".": "./src/core/index.js",
     "./activity": "./src/core/activity.js",
-    "./cards": "./src/core/cards.js"
+    "./cards": "./src/core/cards.js",
+    "./gallery": "./src/core/gallery.js"
   },
-  "files": ["src/core", "scripts/build.mjs", "action.yml"],
-  "bin": { "prettier-profile": "./scripts/build.mjs" },
+  "files": [
+    "src/core",
+    "scripts/build.mjs",
+    "action.yml"
+  ],
+  "bin": {
+    "prettier-profile": "./scripts/build.mjs"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:sample": "node scripts/build.mjs --offline data/sample-activity.json --out dist",
     "dev": "python3 -m http.server 8080",
     "test": "node --test tests/*.test.mjs"
   },
-  "engines": { "node": ">=20" },
-  "keywords": ["github", "profile", "readme", "svg", "github-action", "timeline", "activity", "cards"],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "github",
+    "profile",
+    "readme",
+    "svg",
+    "github-action",
+    "timeline",
+    "activity",
+    "cards"
+  ],
   "repository": "github:in-c0/my-prettier-github-profile-readme",
   "license": "MIT",
-  "sideEffects": false
+  "sideEffects": false,
+  "homepage": "https://profile.ava.kim"
 }

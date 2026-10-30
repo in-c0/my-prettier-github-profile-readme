@@ -3,7 +3,7 @@
   "name": "Ava Kim",
   "bio": "Software engineer, AI researcher, independent builder.",
   "site": "https://ava.kim",
-  "activity": { "range": "12m", "labels": "featured", "maxCallouts": 5 },
+  "activity": { "range": "12m", "extraRanges": ["3m", "all"], "labels": "featured", "maxCallouts": 5, "private": false },
   "stats": ["repos", "commits", "stars"],
   "projects": [
     { "id": "vibo", "title": "ViBo", "tag": "product", "summary": "A visual workspace for planning and bringing ideas to life.", "url": "https://vibomaker.com", "image": "assets/thumbs/vibo.jpg" },
@@ -14,5 +14,17 @@
     { "id": "ssmt", "title": "SSMT", "tag": "research", "summary": "Discovery of products, research, makers, and evidence.", "url": "https://ssmt.uk" },
     { "id": "youtube-to-text", "title": "YouTube to Text", "tag": "tool", "summary": "Turn video transcripts into text you can actually work with.", "url": "https://youtubetotext.com" },
     { "id": "sydney-environmental-atlas", "title": "Sydney Environmental Atlas", "tag": "research", "summary": "Street-level surroundings through map layers, observed evidence and visible uncertainty.", "url": "https://map.lifeos.studio", "repo": "in-c0/sydney-environmental-atlas" }
+  ],
+  "collected": [
+    { "id": "visual-01", "title": "Touching the invisible", "summary": "A hand, a fern, and a delicate layer of responsive digital geometry.", "url": "https://github.com/user-attachments/assets/5c9ff022-ac20-4ae5-8ff8-44286f4c90cd", "video": true, "image": "assets/thumbs/inspiration-01.jpg" },
+    { "id": "visual-02", "title": "Electric traces", "summary": "Luminous currents behaving like drawn lines inside glass.", "url": "https://github.com/user-attachments/assets/5661c5c2-1496-4c36-a932-1af9d5f7de54", "video": true, "image": "assets/thumbs/inspiration-02.jpg" },
+    { "id": "visual-03", "title": "Sensing the hand", "summary": "A flex-sensor glove translating finger motion into a wearable interface.", "url": "https://github.com/user-attachments/assets/b08e443f-782d-4de0-b638-f8993f4158c3", "video": true, "image": "assets/thumbs/inspiration-03.jpg" },
+    { "id": "visual-04", "title": "Hands in hardware", "summary": "A small articulated hand mechanism assembled and explored at a workbench.", "url": "https://github.com/user-attachments/assets/5bbdb7ef-1420-465b-b3e3-882491b5b730", "video": true, "image": "assets/thumbs/inspiration-04.jpg" },
+    { "id": "visual-05", "title": "Training in another world", "summary": "A VR sports-training concept connecting physical movement with virtual timing.", "url": "https://github.com/user-attachments/assets/a8636ad4-1f9f-456b-a300-0fe73f3733fe", "video": true, "image": "assets/thumbs/inspiration-05.jpg" },
+    { "id": "visual-06", "title": "Kinetic feedback", "summary": "An impact-training apparatus that makes movement and resistance tangible.", "url": "https://github.com/user-attachments/assets/4e0cc049-3665-4dac-a47a-d40470b4e0cd", "video": true, "image": "assets/thumbs/inspiration-06.jpg" },
+    { "id": "creative-01", "title": "Mechanical fingers", "summary": "A compact, sensor-rich hand mechanism as inspiration for wearable interfaces.", "url": "https://github.com/user-attachments/assets/84080fea-f9ad-4413-81d4-785d5de866b4", "image": "assets/thumbs/creative-01.jpg" },
+    { "id": "creative-02", "title": "A camera on the wrist", "summary": "A concept collage for a wrist-mounted camera with a scope and tactile controls.", "url": "https://github.com/user-attachments/assets/d3b6a0cd-71c2-4278-8c97-88d1a1641335", "image": "assets/thumbs/creative-02.jpg" },
+    { "id": "creative-03", "title": "Physical feedback in VR", "summary": "A reference collage exploring recoil and embodied feedback in simulated training.", "url": "https://github.com/user-attachments/assets/6c3700c7-b2fb-4bf6-9b1e-f2d6d44cf9ff", "image": "assets/thumbs/creative-03.jpg" },
+    { "id": "creative-04", "title": "A charged gauntlet", "summary": "A glowing plasma globe meets an ornate wearable prop inspired by Arcane.", "url": "https://github.com/user-attachments/assets/f6d969e4-3f76-46c3-b0f4-0600afcb51ae", "image": "assets/thumbs/creative-04.jpg" }
   ]
 }

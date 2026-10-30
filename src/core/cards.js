@@ -20,7 +20,7 @@ export function renderProject(p, opts = {}) {
   parts.push(`<clipPath id="${id}-c"><path d="M1 ${mediaH}V11a10 10 0 0 1 10-10h${width - 22}a10 10 0 0 1 10 10V${mediaH}Z"/></clipPath>`);
   if (p.image) {
     parts.push(`<g clip-path="url(#${id}-c)"><rect width="${width}" height="${mediaH}" fill="${t.surface}"/>` +
-      `<image class="media" href="${esc(p.image)}" xlink:href="${esc(p.image)}" x="0" y="0" width="${width}" height="${mediaH}" preserveAspectRatio="xMidYMin slice"/></g>`);
+      `<image class="media" href="${esc(p.image)}" x="0" y="0" width="${width}" height="${mediaH}" preserveAspectRatio="xMidYMin slice"/></g>`);
   } else {
     // Typographic cover: dotted field + the domain, so text-only projects never look empty.
     const dots = [];
@@ -56,7 +56,7 @@ export function renderHeader(user, stats = [], opts = {}) {
   const ay = (height - A) / 2;
   parts.push(`<clipPath id="${id}-a"><circle cx="${P + A / 2}" cy="${ay + A / 2}" r="${A / 2}"/></clipPath>`);
   parts.push(`<circle cx="${P + A / 2}" cy="${ay + A / 2}" r="${A / 2}" fill="${t.surface}"/>`);
-  if (user.avatar) parts.push(`<image href="${esc(user.avatar)}" xlink:href="${esc(user.avatar)}" x="${P}" y="${ay}" width="${A}" height="${A}" clip-path="url(#${id}-a)"/>`);
+  if (user.avatar) parts.push(`<image href="${esc(user.avatar)}" x="${P}" y="${ay}" width="${A}" height="${A}" clip-path="url(#${id}-a)"/>`);
   else parts.push(`<text x="${P + A / 2}" y="${ay + A / 2 + 9}" font-size="26" font-weight="600" text-anchor="middle" class="muted">${esc((user.name || user.login || '?')[0].toUpperCase())}</text>`);
   parts.push(`<circle cx="${P + A / 2}" cy="${ay + A / 2}" r="${A / 2 - 0.5}" fill="none" stroke="${t.border}"/>`);
 

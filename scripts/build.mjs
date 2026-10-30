@@ -10,6 +10,8 @@ import { dirname, resolve, extname } from 'node:path';
 import { renderActivity } from '../src/core/activity.js';
 import { renderProject, renderHeader } from '../src/core/cards.js';
 import { computeStats, featuredRepos } from '../src/core/stats.js';
+import { renderGallery } from '../src/core/gallery.js';
+import { imageSize } from '../src/core/image-size.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]);
@@ -20,6 +22,8 @@ const outDir = resolve(args.out || process.env.INPUT_OUT || 'dist');
 const token = process.env.GITHUB_TOKEN || process.env.INPUT_TOKEN || '';
 const config = JSON.parse(await readFile(configPath, 'utf8'));
 const username = process.env.INPUT_USERNAME || config.username;
+// Private activity needs a token that belongs to the user (a PAT); the workflow token only sees public data.
+const includePrivate = config.activity?.private === true;
 if (!username) throw new Error('Set "username" in the config or the action input.');
 
 const API = 'https://api.github.com';
@@ -62,9 +66,13 @@ async function commitsViaGraphQL(createdAt) {
     const from = new Date(Math.max(start, to - 365 * 864e5));
     const data = await graphql(COMMITS, { login: username, from: from.toISOString(), to: to.toISOString() });
     for (const repo of data.user.contributionsCollection.commitContributionsByRepository) {
-      if (repo.repository.isPrivate) continue;
+      const priv = repo.repository.isPrivate;
+      if (priv && !includePrivate) continue;
       for (const n of repo.contributions.nodes) {
-        events.push({ type: 'commit', date: n.occurredAt.slice(0, 10), repo: repo.repository.nameWithOwner, count: n.commitCount });
+        // Private repos keep their dates and counts but never their names.
+        events.push(priv
+          ? { type: 'commit', date: n.occurredAt.slice(0, 10), repo: null, count: n.commitCount, private: true }
+          : { type: 'commit', date: n.occurredAt.slice(0, 10), repo: repo.repository.nameWithOwner, count: n.commitCount });
       }
     }
     to = new Date(from - 1);
@@ -88,20 +96,37 @@ async function commitsViaRest(repos) {
   return [...byDay].map(([key, count]) => { const [repo, date] = key.split('|'); return { type: 'commit', date, repo, count }; });
 }
 
-async function dataUri(src) {
-  if (!src) return '';
+const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml' };
+let sharp = null;
+try { sharp = (await import('sharp')).default; } catch { /* optional: only used to shrink large remote images */ }
+
+// Loads a local path or URL. Large images are shrunk with sharp when it is installed,
+// because everything is inlined into the SVG.
+async function loadImage(src, maxWidth = 0) {
+  if (!src) return null;
   try {
+    let bytes, type;
     if (/^https?:/.test(src)) {
       const res = await fetch(src, { headers: { 'User-Agent': 'my-prettier-github-profile-readme' } });
-      if (!res.ok) return '';
-      const type = res.headers.get('content-type') || 'image/png';
-      return `data:${type};base64,${Buffer.from(await res.arrayBuffer()).toString('base64')}`;
+      if (!res.ok) return null;
+      type = (res.headers.get('content-type') || 'image/png').split(';')[0];
+      if (!type.startsWith('image/')) return null;
+      bytes = Buffer.from(await res.arrayBuffer());
+    } else {
+      const file = resolve(dirname(configPath), src);
+      type = MIME[extname(file).toLowerCase()] || 'image/png';
+      bytes = await readFile(file);
     }
-    const file = resolve(dirname(configPath), src);
-    const type = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml' }[extname(file).toLowerCase()] || 'image/png';
-    return `data:${type};base64,${(await readFile(file)).toString('base64')}`;
-  } catch { return ''; }
+    let size = imageSize(bytes);
+    if (sharp && maxWidth && size && size.width > maxWidth && type !== 'image/svg+xml') {
+      bytes = await sharp(bytes).resize({ width: maxWidth }).jpeg({ quality: 74, progressive: true }).toBuffer();
+      type = 'image/jpeg';
+      size = imageSize(bytes);
+    }
+    return { bytes, type, ...size, uri: `data:${type};base64,${bytes.toString('base64')}` };
+  } catch { return null; }
 }
+const dataUri = async src => (await loadImage(src))?.uri || '';
 
 async function collect() {
   if (args.offline) return JSON.parse(await readFile(resolve(args.offline), 'utf8'));
@@ -113,8 +138,17 @@ async function collect() {
   let commits = [];
   try { commits = token ? await commitsViaGraphQL(user.created_at) : await commitsViaRest(repos); }
   catch (err) { console.warn('GraphQL commits failed, using REST fallback:', err.message); commits = await commitsViaRest(repos); }
+  let privateRepos = [];
+  if (includePrivate && token) {
+    try {
+      privateRepos = (await paged('/user/repos?visibility=private&affiliation=owner'))
+        .filter(r => r.owner?.login?.toLowerCase() === username.toLowerCase());
+    } catch { console.warn('private: the token cannot list private repos (use a personal access token)'); }
+    if (!commits.some(c => c.private)) console.warn('private: no private commits visible to this token');
+  }
   const events = [
     ...repos.map(r => ({ type: r.fork ? 'fork' : 'repo', date: r.created_at.slice(0, 10), repo: r.full_name })),
+    ...privateRepos.map(r => ({ type: 'repo', date: r.created_at.slice(0, 10), repo: null, private: true })),
     ...stars.filter(s => s.starred_at).map(s => ({ type: 'star', date: s.starred_at.slice(0, 10), repo: s.repo.full_name })),
     ...commits
   ].sort((a, b) => b.date.localeCompare(a.date));
@@ -154,6 +188,16 @@ for (const p of config.projects || []) {
   const image = await dataUri(p.image);
   for (const theme of ['light', 'dark']) await write(`project-${p.id}-${theme}.svg`, renderProject({ ...p, image }, { theme }));
 }
+if (config.collected?.length) {
+  await mkdir(resolve(outDir, 'thumbs'), { recursive: true });
+  const items = [];
+  for (const c of config.collected) {
+    const img = await loadImage(c.image, 392);
+    if (img) await writeFile(resolve(outDir, 'thumbs', `${c.id}.${img.type === 'image/png' ? 'png' : 'jpg'}`), img.bytes);
+    items.push({ ...c, src: img?.uri || '', width: img?.width, height: img?.height });
+  }
+  for (const theme of ['light', 'dark']) await write(`collected-${theme}.svg`, renderGallery(items, { theme }));
+}
 
 // A ready-to-paste README block that points at the published branch.
 const repo = process.env.GITHUB_REPOSITORY || config.repository || `${username}/my-prettier-github-profile-readme`;
@@ -169,7 +213,8 @@ const snippet = [
   '',
   '<p>',
   ...(config.projects || []).map(p => pic(`project-${p.id}`, p.title, p.url || p.demoUrl, '32%')),
-  '</p>'
+  '</p>',
+  ...(config.collected?.length ? ['', pic('collected', 'Collected references', site, '100%')] : [])
 ].join('\n');
 await writeFile(resolve(outDir, 'README-snippet.md'), snippet + '\n');
 console.log(`Wrote ${files.length} SVGs to ${outDir} (${data.events.length} events).`);

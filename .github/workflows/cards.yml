@@ -25,11 +25,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install image resizer (optional, shrinks remote images)
+        run: npm install --no-save --no-package-lock sharp@0.33.5
       - name: Render SVG cards
         uses: ./
         with:
           config: profile.config.json
           out: dist
+          # Optional: a personal access token in the PROFILE_TOKEN secret lets the cards
+          # include private activity (counts only) when "activity.private" is true.
+          token: ${{ secrets.PROFILE_TOKEN || github.token }}
       - name: Publish cards to the output branch
         run: |
           cd dist
