@@ -165,7 +165,10 @@ const pages = {
         draw: theme => {
           const wrap = h('div', { style: 'display:grid;gap:12px;width:100%;max-width:840px' });
           wrap.innerHTML = headerSVG(theme) + `<div class="wide">${activitySVG(theme)}</div>`;
-          if (!state.guest) wrap.append(projectGrid(theme, featured));
+          if (!state.guest) {
+            wrap.append(projectGrid(theme, featured));
+            if (state.config?.collected?.length) wrap.append(galleryStage(theme));
+          }
           return wrap;
         },
         readme: () => readmeSnippet(),
