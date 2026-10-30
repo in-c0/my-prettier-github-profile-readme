@@ -1,0 +1,64 @@
+name: Profile cards
+
+on:
+  schedule:
+    - cron: '23 19 * * *' # daily, ~6am Sydney
+  workflow_dispatch:
+  push:
+    branches: [main, 'redesign/**']
+    paths: [profile.config.json, index.html, src/**, scripts/**, assets/**, site/**, .github/workflows/cards.yml]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: profile-cards
+  cancel-in-progress: true
+
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Render SVG cards
+        uses: ./
+        with:
+          config: profile.config.json
+          out: dist
+      - name: Publish cards to the output branch
+        run: |
+          cd dist
+          git init -q -b output
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -qm "Update profile cards"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" output
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Assemble the docs site
+        run: |
+          mkdir -p _site/data
+          cp -r index.html site src assets profile.config.json _site/
+          cp data/sample-activity.json _site/data/
+          cp dist/activity.json _site/data/activity.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  # Requires Settings → Pages → Source: "GitHub Actions". Skipped quietly otherwise.
+  pages:
+    needs: cards
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

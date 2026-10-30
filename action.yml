@@ -1,0 +1,27 @@
+name: My Prettier GitHub Profile README
+description: Render a profile header, project cards and an activity arrow timeline (stars, forks, new repos, commits) as README-ready SVGs.
+author: in-c0
+branding:
+  icon: activity
+  color: gray-dark
+inputs:
+  config:
+    description: Path to profile.config.json
+    default: profile.config.json
+  username:
+    description: GitHub username (defaults to the config's "username")
+    default: ''
+  out:
+    description: Output directory for the SVG cards
+    default: dist
+  token:
+    description: Token used for the GitHub API. The default workflow token is enough for public data.
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: node "${{ github.action_path }}/scripts/build.mjs" --config "${{ inputs.config }}" --out "${{ inputs.out }}"
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        INPUT_USERNAME: ${{ inputs.username }}
