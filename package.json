@@ -1,30 +1,44 @@
 {
   "name": "@in-c0/my-prettier-github-profile-readme",
-  "version": "0.1.0",
-  "description": "A framework-free Web UI library for interactive GitHub profile galleries, timelines, stories and project showcases.",
+  "version": "0.2.0",
+  "description": "README-ready GitHub profile cards: header, projects, activity arrow and gallery, rendered as SVG.",
   "type": "module",
-  "main": "./src/profile-atlas.js",
-  "module": "./src/profile-atlas.js",
+  "main": "./src/core/index.js",
   "exports": {
-    ".": "./src/profile-atlas.js",
-    "./style.css": "./src/profile-atlas.css"
+    ".": "./src/core/index.js",
+    "./activity": "./src/core/activity.js",
+    "./cards": "./src/core/cards.js",
+    "./gallery": "./src/core/gallery.js"
   },
   "files": [
-    "src"
+    "src/core",
+    "scripts/build.mjs",
+    "action.yml"
   ],
+  "bin": {
+    "prettier-profile": "./scripts/build.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:sample": "node scripts/build.mjs --offline data/sample-activity.json --out dist",
+    "dev": "python3 -m http.server 8080",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "keywords": [
-    "web-components",
-    "custom-elements",
     "github",
     "profile",
     "readme",
-    "gallery",
+    "svg",
+    "github-action",
     "timeline",
-    "portfolio"
+    "activity",
+    "cards"
   ],
+  "repository": "github:in-c0/my-prettier-github-profile-readme",
   "license": "MIT",
-  "sideEffects": [
-    "./src/profile-atlas.js",
-    "./src/profile-atlas.css"
-  ]
+  "sideEffects": false,
+  "homepage": "https://profile.ava.kim"
 }
