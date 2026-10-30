@@ -22,6 +22,7 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 
 // `guest` holds a visitor's own profile from "Try yours"; null shows the site owner.
+const introActivity = { range: '12m', end: null, includePrivate: true };
 const state = { data: null, config: null, live: false, guest: null, lookup: { status: 'idle', message: '' } };
 const subject = () => state.guest
   ? { data: state.guest, config: { username: state.guest.user.login, activity: { labels: 'all' } } }
@@ -162,9 +163,12 @@ const pages = {
           h('a', { class: 'btn', href: '#activity' }, 'Browse components'))),
       tryForm(),
       previewBlock({
-        draw: theme => {
+        controls: (ctx, redraw) => activityControls(introActivity, redraw),
+        onStageClick: activityClick(introActivity),
+        draw: (theme, ctx) => {
           const wrap = h('div', { style: 'display:grid;gap:12px;width:100%;max-width:840px' });
-          wrap.innerHTML = headerSVG(theme) + `<div class="wide">${activitySVG(theme)}</div>`;
+          wrap.innerHTML = headerSVG(theme);
+          wrap.append(activityView(theme, ctx, introActivity));
           if (!state.guest) {
             wrap.append(projectGrid(theme, featured));
             if (state.config?.collected?.length) wrap.append(galleryStage(theme));
@@ -242,7 +246,7 @@ const pages = {
     const st = { range: subject().config?.activity?.range || '12m', end: null, includePrivate: true };
     return componentPage({
       title: 'Activity arrow',
-      lead: 'New repos, forks and stars stack above one arrow; commits hang below it. Drag the chart to look further back.',
+      lead: 'New repos, forks and stars stack above one arrow; commits hang below it. Drag the chart, or the window on the strip below, to travel back in time.',
       extra: legend(),
       block: activityBlock(st),
       options: [
@@ -274,69 +278,119 @@ const pages = {
   })
 };
 
-/* ---------- activity: ranges, sliding window, private toggle ---------- */
+/* ---------- activity: ranges, time window, private toggle ---------- */
+const DAY = 864e5;
 const STEP_DAYS = { day: 1, week: 7 };
+const RANGE_ORDER = Object.keys(RANGES);
+
+function activityModel(st, range = st.range, end = st.end) {
+  return bucketize(subject().data?.events, { range, now: subject().data?.generatedAt, end, includePrivate: st.includePrivate });
+}
+
+// Chart + overview strip. The strip shows all-time activity with the visible window
+// drawn on it; drag the window (or the chart itself) to travel back in time.
+function activityView(theme, ctx, st) {
+  const t = THEMES[theme];
+  const wrap = h('div', { class: 'activity-view' });
+  const chart = h('div', { class: 'wide activity-chart', html: activitySVG(theme, st.range, { end: st.end, includePrivate: st.includePrivate }) });
+  wrap.append(chart);
+  if (st.range === 'all') return wrap;
+
+  const all = activityModel(st, 'all', null);
+  const first = all.buckets[0].start, last = utcToday() + DAY, total = last - first;
+  const months = all.buckets.map(b => b.counts.repo + b.counts.fork + b.counts.star + b.counts.commit);
+  const peak = Math.max(1, ...months);
+  const bars = months.map((v, i) => {
+    const hgt = v ? 3 + Math.sqrt(v / peak) * 21 : 0;
+    return hgt ? `<rect x="${i + 0.15}" y="${24 - hgt}" width=".7" height="${hgt}" rx=".2"/>` : '';
+  }).join('');
+  const strip = h('div', { class: 'overview', role: 'slider', tabindex: '0', 'aria-label': 'Time window. Drag, or use the arrow keys.', style: `--ov-border:${t.border};--ov-fg:${t.fg};--ov-bg:${t.surface}` });
+  strip.innerHTML = `<svg viewBox="0 0 ${months.length} 24" preserveAspectRatio="none" aria-hidden="true"><g fill="${t.commit}" fill-opacity=".55">${bars}</g></svg>`;
+  const win = h('div', { class: 'overview-window' });
+  strip.append(win);
+  const years = [];
+  for (const b of all.buckets) { const d = new Date(b.start); if (d.getUTCMonth() === 0) years.push({ x: (b.start - first) / total, y: d.getUTCFullYear() }); }
+  const labels = h('div', { class: 'overview-labels', style: `color:${t.subtle}` },
+    ...years.map(y => h('span', { style: `left:${(y.x * 100).toFixed(2)}%` }, String(y.y))),
+    h('span', { class: 'now', style: 'right:0' }, 'now'));
+
+  const spanMs = () => { const m = activityModel(st, st.range, null); return m.to - m.from; };
+  const step = () => (STEP_DAYS[RANGES[st.range].grain] || 1) * DAY;
+  const endMs = () => (st.end ? Date.parse(st.end + 'T00:00:00Z') + DAY : last);
+  const place = () => {
+    const w = Math.min(1, spanMs() / total), right = (endMs() - first) / total;
+    win.style.width = (w * 100) + '%';
+    win.style.left = (Math.max(0, right - w) * 100) + '%';
+    strip.setAttribute('aria-valuetext', st.end ? 'Ending ' + st.end : 'Ending now');
+  };
+  const setEnd = ms => {
+    const min = first + spanMs(), snapped = Math.round((ms - last) / step()) * step() + last;
+    const clamped = Math.max(Math.min(min, last), Math.min(last, snapped));
+    const next = clamped >= last - step() / 2 ? null : new Date(clamped - DAY).toISOString().slice(0, 10);
+    if (next === st.end) return;
+    st.end = next;
+    chart.innerHTML = activitySVG(theme, st.range, { end: st.end, includePrivate: st.includePrivate, animate: false });
+    place();
+  };
+  // Drag the window, or press anywhere on the strip to centre the window there.
+  let drag = null;
+  strip.addEventListener('pointerdown', e => {
+    const box = strip.getBoundingClientRect(), onWin = e.target === win;
+    if (!onWin) setEnd(first + ((e.clientX - box.left) / box.width) * total + spanMs() / 2);
+    drag = { x: e.clientX, end: endMs(), box };
+    strip.setPointerCapture(e.pointerId);
+    strip.classList.add('dragging');
+    e.preventDefault();
+  });
+  strip.addEventListener('pointermove', e => { if (drag) setEnd(drag.end + ((e.clientX - drag.x) / drag.box.width) * total); });
+  const stop = () => { drag = null; strip.classList.remove('dragging'); };
+  strip.addEventListener('pointerup', stop);
+  strip.addEventListener('pointercancel', stop);
+  strip.addEventListener('keydown', e => {
+    const k = { ArrowLeft: -1, ArrowRight: 1, PageUp: -4, PageDown: 4 }[e.key];
+    if (k) { e.preventDefault(); setEnd(endMs() + k * step() * (st.range === '12m' ? 4 : 7)); }
+    if (e.key === 'End') { e.preventDefault(); setEnd(last); }
+  });
+  // Dragging the chart itself moves time the natural way: pull it right to see earlier weeks.
+  let pull = null;
+  chart.addEventListener('pointerdown', e => { pull = { x: e.clientX, end: endMs(), moved: false, id: e.pointerId }; });
+  chart.addEventListener('pointermove', e => {
+    if (!pull || e.pointerId !== pull.id) return;
+    const dx = e.clientX - pull.x;
+    if (!pull.moved && Math.abs(dx) > 4) { pull.moved = true; chart.setPointerCapture(e.pointerId); chart.classList.add('dragging'); }
+    if (!pull.moved) return;
+    const w = chart.querySelector('svg').getBoundingClientRect().width * (776 / 840);
+    setEnd(pull.end - (dx / w) * spanMs());
+  });
+  const release = () => { if (pull?.moved) ctx.dragged = true; pull = null; chart.classList.remove('dragging'); };
+  chart.addEventListener('pointerup', release);
+  chart.addEventListener('pointercancel', release);
+
+  wrap.append(h('div', { class: 'overview-wrap' }, strip, labels));
+  requestAnimationFrame(place);
+  return wrap;
+}
+
+function activityControls(st, redraw) {
+  const p = seg([['on', 'Private on'], ['off', 'Off']], st.includePrivate ? 'on' : 'off', v => { st.includePrivate = v === 'on'; redraw(); }, 'Private activity');
+  if (!hasPrivate()) { p.setAttribute('title', 'This profile’s data has no private activity'); p.querySelectorAll('button').forEach(b => { b.disabled = true; }); }
+  return [seg(RANGE_ORDER.map(k => [k, k === 'all' ? 'All' : k]), st.range, v => { st.range = v; st.end = null; redraw(); }, 'Range'), p];
+}
+
+// A click on the chart (not a drag) advances to the next range.
+function activityClick(st) {
+  return (ctx, redraw) => {
+    if (ctx.dragged) { ctx.dragged = false; return; }
+    if (!ctx.lastTarget?.closest?.('.activity-chart')) return;
+    st.range = RANGE_ORDER[(RANGE_ORDER.indexOf(st.range) + 1) % RANGE_ORDER.length]; st.end = null; redraw();
+  };
+}
+
 function activityBlock(st) {
-  const order = Object.keys(RANGES);
-  let drawn = null; // { stage, theme }
-  const span = () => {
-    const m = bucketize(subject().data?.events, { range: st.range, now: subject().data?.generatedAt, end: st.end, includePrivate: st.includePrivate });
-    const step = STEP_DAYS[m.grain] || 0;
-    const back = step ? Math.max(0, Math.floor((utcToday() - m.first) / 864e5 / step) - m.buckets.length + 1) : 0;
-    const offset = step && st.end ? Math.round((utcToday() - m.today) / 864e5 / step) : 0;
-    return { m, step, back, offset };
-  };
-  const svgFor = (theme, animate = true) => activitySVG(theme, st.range, { end: st.end, includePrivate: st.includePrivate, animate });
-  const setOffset = steps => {
-    const { step, back } = span();
-    const k = Math.max(0, Math.min(back, Math.round(steps)));
-    st.end = k ? new Date(utcToday() - k * step * 864e5).toISOString().slice(0, 10) : null;
-    return k;
-  };
   return previewBlock({
-    draw: (theme, ctx, redraw) => {
-      const wrap = h('div', { style: 'width:100%;display:grid;gap:14px;justify-items:center' });
-      const chart = h('div', { class: 'wide', style: 'width:100%;max-width:840px;touch-action:pan-y', html: svgFor(theme) });
-      wrap.append(chart);
-      const { back, offset } = span();
-      if (back > 0) {
-        const slider = h('input', { type: 'range', id: 'activity-window', class: 'window-slider', min: '0', max: String(back), step: '1', value: String(back - offset), 'aria-label': 'Move the time window' });
-        slider.addEventListener('input', () => { setOffset(back - Number(slider.value)); chart.innerHTML = svgFor(theme, false); });
-        wrap.append(slider);
-        // Drag on the chart slides the window; a click without movement advances the range.
-        let start = null;
-        chart.addEventListener('pointerdown', e => { start = { x: e.clientX, offset: span().offset, moved: false, id: e.pointerId }; });
-        chart.addEventListener('pointermove', e => {
-          if (!start || e.pointerId !== start.id) return;
-          const dx = e.clientX - start.x;
-          if (Math.abs(dx) > 4 && !start.moved) { start.moved = true; chart.setPointerCapture(e.pointerId); chart.style.cursor = 'grabbing'; }
-          if (!start.moved) return;
-          const svg = chart.querySelector('svg');
-          const bucketPx = svg.getBoundingClientRect().width * ((840 - 64) / 840) / span().m.buckets.length;
-          const k = setOffset(start.offset + dx / bucketPx);
-          slider.value = String(back - k);
-          chart.innerHTML = svgFor(theme, false);
-        });
-        const end = () => { if (start?.moved) ctx.dragged = true; start = null; chart.style.cursor = ''; };
-        chart.addEventListener('pointerup', end);
-        chart.addEventListener('pointercancel', end);
-      }
-      return wrap;
-    },
-    controls: (ctx, redraw) => {
-      const priv = hasPrivate();
-      const p = seg([['on', 'Private on'], ['off', 'Off']], st.includePrivate ? 'on' : 'off', v => { st.includePrivate = v === 'on'; redraw(); }, 'Private activity');
-      if (!priv) { p.setAttribute('title', 'This profile’s data has no private activity'); p.querySelectorAll('button').forEach(b => { b.disabled = true; }); }
-      return [
-        seg(order.map(k => [k, k === 'all' ? 'All' : k]), st.range, v => { st.range = v; st.end = null; redraw(); }, 'Range'),
-        p
-      ];
-    },
-    onStageClick: (ctx, redraw) => {
-      if (ctx.dragged) { ctx.dragged = false; return; }
-      if (ctx.lastTarget?.closest?.('input')) return;
-      st.range = order[(order.indexOf(st.range) + 1) % order.length]; st.end = null; redraw();
-    },
+    draw: (theme, ctx) => activityView(theme, ctx, st),
+    controls: (ctx, redraw) => activityControls(st, redraw),
+    onStageClick: activityClick(st),
     readme: () => picture('activity', 'GitHub activity timeline', `https://github.com/${subject().config?.username || 'in-c0'}`, '100%'),
     js: () => jsSnippet('activity')
   });

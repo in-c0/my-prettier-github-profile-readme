@@ -52,6 +52,10 @@ jobs:
           cp -r index.html site src assets profile.config.json _site/
           cp data/sample-activity.json _site/data/
           cp dist/activity.json _site/data/activity.json
+          # Version every asset URL so a deploy is never hidden behind the 10-minute Pages cache.
+          V=${GITHUB_SHA::8}
+          sed -i -E "s#(href|src)=\"(site/[^\"]+)\"#\1=\"\2?v=$V\"#g" _site/index.html
+          sed -i -E "s#(from '\.{1,2}/[^']+\.js)'#\1?v=$V'#g" _site/site/*.js _site/src/core/*.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
