@@ -4,12 +4,27 @@ GitHub profile cards that look like they belong to a component library. A daily 
 
 **[Docs](https://profile.ava.kim)** · **[Try it with your @](https://profile.ava.kim/#intro)** · [Configuration](https://profile.ava.kim/#config)
 
-<a href="https://github.com/in-c0"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-dark.svg"><img alt="Activity arrow: new repos, forks, stars and commits on one timeline" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-light.svg" width="100%"></picture></a>
+<a href="https://profile.ava.kim/#activity"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-dark.svg"><img alt="Activity arrow: new repos, forks, stars and commits on one timeline" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-light.svg" width="100%"></picture></a>
+
+<details><summary>3 months</summary>
+
+<a href="https://profile.ava.kim/#activity"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-3m-dark.svg"><img alt="Activity arrow, past 3 months" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-3m-light.svg" width="100%"></picture></a>
+
+</details>
+<details><summary>All time</summary>
+
+<a href="https://profile.ava.kim/#activity"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-all-dark.svg"><img alt="Activity arrow, all time" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/activity-all-light.svg" width="100%"></picture></a>
+
+</details>
+
+<a href="https://profile.ava.kim/#collected"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/collected-dark.svg"><img alt="Collected: a gallery of references" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/collected-light.svg" width="100%"></picture></a>
+
+<a href="https://profile.ava.kim/#header"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/header-dark.svg"><img alt="Profile header" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/header-light.svg" width="100%"></picture></a>
 
 <p>
+<a href="https://ui.ava.kim/knurl/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-knurl-dark.svg"><img alt="Knurl" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-knurl-light.svg" width="32%"></picture></a>
 <a href="https://vibomaker.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-vibo-dark.svg"><img alt="ViBo" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-vibo-light.svg" width="32%"></picture></a>
-<a href="https://sumz-up.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-sumzup-dark.svg"><img alt="Sumzup" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-sumzup-light.svg" width="32%"></picture></a>
-<a href="https://paper-ui-in-c0.vercel.app/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-paper-ui-dark.svg"><img alt="Paper UI" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-paper-ui-light.svg" width="32%"></picture></a>
+<a href="https://sumz-up.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-sumzup-dark.svg"><img alt="Sumzup (formerly YouTube to Text)" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-sumzup-light.svg" width="32%"></picture></a>
 </p>
 
 ## Components
