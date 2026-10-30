@@ -9,7 +9,7 @@ GitHub profile cards that look like they belong to a component library. A daily 
 <p>
 <a href="https://vibomaker.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-vibo-dark.svg"><img alt="ViBo" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-vibo-light.svg" width="32%"></picture></a>
 <a href="https://sumz-up.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-sumzup-dark.svg"><img alt="Sumzup" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-sumzup-light.svg" width="32%"></picture></a>
-<a href="https://paper-ui-react-lab.vercel.app/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-paper-ui-dark.svg"><img alt="Paper UI" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-paper-ui-light.svg" width="32%"></picture></a>
+<a href="https://paper-ui-in-c0.vercel.app/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-paper-ui-dark.svg"><img alt="Paper UI" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/project-paper-ui-light.svg" width="32%"></picture></a>
 </p>
 
 ## Components
