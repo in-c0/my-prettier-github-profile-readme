@@ -4,7 +4,7 @@ import { theme } from './tokens.js';
 import { esc, round, textWidth, wrap, frame } from './svg.js';
 
 const LANG_COLORS = {
-  TypeScript: '#3178c6', JavaScript: '#e3c03a', Python: '#3572a5', 'C#': '#178600', 'C++': '#f34b7d', C: '#555555',
+  TypeScript: '#3178c6', JavaScript: '#e3c03a', Python: '#8fb8e8', 'C#': '#178600', 'C++': '#f34b7d', C: '#555555',
   Rust: '#dea584', Go: '#00add8', Swift: '#f05138', Kotlin: '#a97bff', Java: '#b07219', HTML: '#e34c26', CSS: '#663399',
   Shell: '#89e051', 'Jupyter Notebook': '#da5b0b', Svelte: '#ff3e00', Vue: '#41b883', Ruby: '#701516', Dart: '#00b4ab'
 };
