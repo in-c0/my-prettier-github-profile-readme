@@ -62,9 +62,9 @@ export function hash(str) {
 const reduced = id => `@media (prefers-reduced-motion:reduce){#${id} *{animation:none!important;opacity:1!important;stroke-dashoffset:0!important;transform:none!important}}`;
 
 // `css` is a function of the scope selector so component rules never leak between cards.
-export function frame({ width, height, title, desc, t, css = () => '', body, animate = true, border = true, id }) {
+export function frame({ width, height, title, desc, t, css = () => '', body, animate = true, border = true, id, overflow = false }) {
   id = id || 'pp' + hash(title + desc + body.length + t.bg);
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="${id}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="${id}-t ${id}-d">` +
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="${id}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"${overflow ? ' overflow="visible" style="overflow:visible"' : ''} role="img" aria-labelledby="${id}-t ${id}-d">` +
     `<title id="${id}-t">${esc(title)}</title><desc id="${id}-d">${esc(desc)}</desc>` +
     `<style>${baseStyle(t, id)}${css('#' + id)}${animate ? reduced(id) : ''}</style>` +
     `<rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="10" fill="${t.bg}"${border ? ` stroke="${t.border}"` : ''}/>` +

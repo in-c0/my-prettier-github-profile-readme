@@ -117,10 +117,11 @@ export function renderActivity(data, opts = {}) {
   const delay = x => animate ? Math.round(150 + ((x - X0) / (X1 - X0)) * 900) : 0;
   const maxCommit = Math.max(1, ...model.buckets.map(b => b.counts.commit));
   const parts = [];
+  const halo = ` paint-order="stroke" stroke="${t.bg}" stroke-width="3.5" stroke-linejoin="round"`;
 
   // Header: title, range, legend.
-  parts.push(`<text x="${P}" y="38" font-size="14" font-weight="600">${esc(opts.title || 'Activity')}</text>`);
-  parts.push(`<text x="${P + textWidth(opts.title || 'Activity', 14) + 10}" y="38" font-size="12" class="muted">${esc(rangeLabel)}</text>`);
+  parts.push(`<text x="${P}" y="38" font-size="14" font-weight="600"${halo}>${esc(opts.title || 'Activity')}</text>`);
+  parts.push(`<text x="${P + textWidth(opts.title || 'Activity', 14) + 10}" y="38" font-size="12" class="muted"${halo}>${esc(rangeLabel)}</text>`);
   let lx = width - P;
   const legend = [];
   const keys = ['commit', 'star', 'fork', 'repo'];
@@ -130,7 +131,7 @@ export function renderActivity(data, opts = {}) {
       : `${model.totals[k].toLocaleString('en-US')} ${TYPE_META[k].plural}`;
     const w = textWidth(txt, 11, true);
     lx -= w;
-    legend.push(`<text x="${round(lx)}" y="38" font-size="11" class="mono muted">${esc(txt)}</text>`);
+    legend.push(`<text x="${round(lx)}" y="38" font-size="11" class="mono muted"${halo}>${esc(txt)}</text>`);
     lx -= 10;
     const sw = k === 'commit' || k === 'privateCommit'
       ? `<rect x="-2" y="-4.5" width="4" height="9" rx="1"${k === 'privateCommit' ? ' fill-opacity=".38"' : ''}/>` : GLYPH[k](4);
@@ -159,18 +160,22 @@ export function renderActivity(data, opts = {}) {
     const x = round(cx(i)), d = delay(x);
     const glyphs = [];
     for (const k of ['repo', 'fork', 'star']) for (let j = 0; j < b.counts[k]; j++) glyphs.push(k);
-    const shown = glyphs.length > maxStack ? glyphs.slice(0, maxStack - 1) : glyphs;
     let y = axisY - 4 - r;
     const g = [];
-    shown.forEach((k, j) => {
+    glyphs.slice(0, maxStack).forEach((k, j) => {
       g.push(`<g transform="translate(${x} ${round(y)})" fill="${t[k]}"><g class="pop" style="animation-delay:${d + j * 40}ms">${GLYPH[k](r)}</g></g>`);
       y -= step;
     });
-    if (glyphs.length > shown.length) {
-      g.push(`<text x="${x}" y="${round(y + r + 1)}" font-size="9" text-anchor="middle" class="mono subtle pop" style="animation-delay:${d + shown.length * 40}ms">+${glyphs.length - shown.length}</text>`);
-      y -= 8;
-    }
-    stackTops[i] = y + r;
+    stackTops[i] = y + step - r;
+    // Overflow keeps stacking as faint glyphs that fade out upward, past the card's top edge
+    // when there is room (inline on a page). Labels and header text keep a halo above them.
+    const y0 = y, fadeLen = y0 + 28;
+    glyphs.slice(maxStack).forEach((k, j) => {
+      const op = 0.34 * (1 - (y0 - y) / fadeLen);
+      if (op < 0.025) return;
+      g.push(`<g transform="translate(${x} ${round(y)})" fill="${t[k]}" opacity="${round(op * 100) / 100}"><g class="pop" style="animation-delay:${d + (maxStack + j) * 25}ms">${GLYPH[k](r)}</g></g>`);
+      y -= step;
+    });
     if (b.counts.commit) {
       const h = round(3 + Math.sqrt(b.counts.commit / maxCommit) * 34);
       const w = round(Math.max(2, Math.min(6, bw * 0.46)));
@@ -216,7 +221,7 @@ export function renderActivity(data, opts = {}) {
     parts.push(`<g class="callout" style="animation-delay:${d}ms">` +
       `<line x1="${round(c.x)}" y1="${y - 3}" x2="${round(c.x)}" y2="${round(top)}" stroke="${t.border}" stroke-width="1"/>` +
       `<g transform="translate(${round(c.x)} ${y - 4})" fill="${t[c.e.type]}">${GLYPH[c.e.type](3)}</g>` +
-      `<text x="${round(tx)}" y="${y}" font-size="11" text-anchor="${c.anchor}">${esc(c.text)}</text></g>`);
+      `<text x="${round(tx)}" y="${y}" font-size="11" text-anchor="${c.anchor}"${halo}>${esc(c.text)}</text></g>`);
   });
 
   if (!model.buckets.some(b => TYPES.some(k => b.counts[k]))) {
@@ -231,5 +236,5 @@ export function renderActivity(data, opts = {}) {
       `@keyframes pp-draw{to{stroke-dashoffset:0}}@keyframes pp-fade{to{opacity:1}}@keyframes pp-pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}@keyframes pp-grow{to{transform:scaleY(1)}}`
     : '';
   const desc = `${rangeLabel}: ${model.totals.commit} commits, ${model.totals.star} stars, ${model.totals.fork} forks, ${model.totals.repo} new repositories.`;
-  return frame({ id: opts.id, width, height, t, css, animate, title: opts.title || 'GitHub activity', desc, body: parts.join(''), border: opts.border !== false });
+  return frame({ id: opts.id, overflow: true, width, height, t, css, animate, title: opts.title || 'GitHub activity', desc, body: parts.join(''), border: opts.border !== false });
 }
