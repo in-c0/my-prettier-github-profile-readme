@@ -267,9 +267,9 @@ const pages = {
       js: () => jsSnippet('coding')
     }),
     options: [
-      ['Time of day', 'Early-bird · Daytime · Evening · Night-owl · Around-the-clock', 'The window holding the most commits (by author time, in config.timezone). Under 38% everywhere → Around-the-clock.'],
-      ['Rhythm', 'Weekender · Sprinter · Marathoner · Builder', '≥45% of commits on weekends; ≥45% on the busiest 10% of days; 120+ active days; otherwise Builder.'],
-      ['Traits', 'Explorer · Deep diver · Focused · Collector', '15+ repos with commits; one repo ≥50%; ≥96 stars in a year.'],
+      ['Time of day', 'Early-bird · Daylight · Twilight · Night-owl · Round-the-clock', 'Circular mean of commit hours in config.timezone, so 23:00 and 01:00 count as one night. A weak peak means Round-the-clock.'],
+      ['Cadence', 'Weekender · Sprinter · Marathoner · Pulse', '40%+ of commits on weekends; 45%+ on the busiest 10% of days; 150+ active days; otherwise Pulse (weeks with commits).'],
+      ['Traits', 'Explorer · Deep diver · Focused · Polyglot · Collector', '15+ repos with commits; one repo ≥50%; 4+ languages; ≥96 stars in a year. Under 30 commits the card says so instead of guessing.'],
       ['Data', 'habits.hours / weekdays / languages', 'The build samples your own commits from your 25 busiest public repos this year. Only histograms are published.']
     ]
   }),
