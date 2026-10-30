@@ -6,14 +6,15 @@
   "activity": { "range": "12m", "extraRanges": ["3m", "all"], "labels": "featured", "maxCallouts": 5, "private": false },
   "stats": ["repos", "commits", "stars"],
   "projects": [
+    { "id": "knurl", "title": "Knurl", "tag": "library", "summary": "Form controls machined as isometric instruments, for React and plain DOM.", "url": "https://ui.ava.kim/knurl/", "repo": "in-c0/knurl", "image": "assets/thumbs/knurl.jpg" },
     { "id": "vibo", "title": "ViBo", "tag": "product", "summary": "A visual workspace for planning and bringing ideas to life.", "url": "https://vibomaker.com", "image": "assets/thumbs/vibo.jpg" },
     { "id": "sumzup", "title": "Sumzup", "tag": "product", "summary": "Explore long-form ideas through concise, structured AI digests.", "url": "https://sumz-up.com", "image": "assets/thumbs/sumzup.jpg" },
-    { "id": "paper-ui", "title": "Paper UI", "tag": "library", "summary": "A public collection of expressive, reusable interface components.", "url": "https://paper-ui-react-lab.vercel.app/", "repo": "in-c0/paper-ui", "image": "assets/thumbs/paper-ui.jpg" },
+    { "id": "paper-ui", "title": "Paper UI", "tag": "library", "summary": "A public collection of expressive, reusable interface components.", "url": "https://ui.ava.kim/paper-ui/", "repo": "in-c0/paper-ui", "image": "assets/thumbs/paper-ui.jpg" },
     { "id": "shorts-remover", "title": "YouTube Shorts Remover", "tag": "extension", "summary": "Give your YouTube browsing a little more room to breathe.", "url": "https://chromewebstore.google.com/detail/youtube-shorts-playables/dilmoegnonbiadmhbmaehnhogjlkikdp", "repo": "in-c0/youtube-shorts-remover", "image": "assets/thumbs/shorts-remover.jpg" },
-    { "id": "consilium", "title": "Consilium", "tag": "research", "summary": "Agentic roundtables for reviewing software, specifications, and visual quality.", "url": "https://consilium.ava.kim" },
-    { "id": "ssmt", "title": "SSMT", "tag": "research", "summary": "Discovery of products, research, makers, and evidence.", "url": "https://ssmt.uk" },
-    { "id": "youtube-to-text", "title": "YouTube to Text", "tag": "tool", "summary": "Turn video transcripts into text you can actually work with.", "url": "https://youtubetotext.com" },
-    { "id": "sydney-environmental-atlas", "title": "Sydney Environmental Atlas", "tag": "research", "summary": "Street-level surroundings through map layers, observed evidence and visible uncertainty.", "url": "https://map.lifeos.studio", "repo": "in-c0/sydney-environmental-atlas" }
+    { "id": "consilium", "title": "Consilium", "tag": "research", "summary": "Agentic roundtables for reviewing software, specifications, and visual quality.", "url": "https://consilium.ava.kim", "image": "assets/thumbs/consilium.jpg" },
+    { "id": "ssmt", "title": "SSMT", "tag": "research", "summary": "Discovery of products, research, makers, and evidence.", "url": "https://ssmt.uk", "image": "assets/thumbs/ssmt.jpg" },
+    { "id": "youtube-to-text", "title": "YouTube to Text", "tag": "tool", "summary": "Turn video transcripts into text you can actually work with.", "url": "https://youtubetotext.com", "image": "assets/thumbs/youtube-to-text.jpg" },
+    { "id": "sydney-environmental-atlas", "title": "Sydney Environmental Atlas", "tag": "research", "summary": "Street-level surroundings through map layers, observed evidence and visible uncertainty.", "url": "https://map.lifeos.studio", "repo": "in-c0/sydney-environmental-atlas", "image": "assets/thumbs/sydney-environmental-atlas.jpg" }
   ],
   "collected": [
     { "id": "visual-01", "title": "Touching the invisible", "summary": "A hand, a fern, and a delicate layer of responsive digital geometry.", "url": "https://github.com/user-attachments/assets/5c9ff022-ac20-4ae5-8ff8-44286f4c90cd", "video": true, "image": "assets/thumbs/inspiration-01.jpg" },
