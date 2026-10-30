@@ -77,7 +77,7 @@ p { margin: 0 0 12px; }
 .prose code, td code { font-size: 12.5px; padding: 1px 5px; border-radius: 5px; background: var(--surface); color: var(--fg); }
 
 /* Hero */
-.hero { padding: 24px 0 8px; }
+.hero { padding: 24px 0 8px; margin-bottom: 28px; }
 .hero h1 { font-size: 40px; letter-spacing: -0.035em; }
 .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); margin-bottom: 18px; }
 .badge i { width: 6px; height: 6px; border-radius: 50%; background: #39d353; }
@@ -163,7 +163,7 @@ td:first-child { white-space: nowrap; color: var(--fg); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* Try your own profile */
-.try-wrap { margin: -12px 0 28px; display: grid; gap: 8px; }
+.try-wrap { margin: 28px 0 0; padding-top: 24px; border-top: 1px solid var(--border); display: grid; gap: 8px; }
 .try-title { margin: 0; font-size: 13px; font-weight: 500; color: var(--secondary); }
 .try { display: flex; gap: 8px; flex-wrap: wrap; }
 .try-field { display: inline-flex; align-items: center; height: 36px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 4px 0 12px; background: var(--bg); min-width: 0; flex: 0 1 320px; transition: border-color .15s; }

@@ -158,10 +158,7 @@ const pages = {
         h('span', { class: 'badge' }, h('i'), window.__PP_INLINE?.badge || (state.live ? 'Live data · refreshed daily' : 'Sample data')),
         h('h1', {}, 'A prettier profile README.'),
         h('p', { class: 'lead' }, 'Four components, rendered as SVG and refreshed by a GitHub Action. Paste one block of markdown and they work on github.com.'),
-        h('div', { class: 'actions' },
-          h('a', { class: 'btn primary', href: '#readme' }, 'Embed in README'),
-          h('a', { class: 'btn', href: '#activity' }, 'Browse components'))),
-      tryForm(),
+      ),
       previewBlock({
         controls: (ctx, redraw) => activityControls(introActivity, redraw),
         onStageClick: activityClick(introActivity),
@@ -177,7 +174,8 @@ const pages = {
         },
         readme: () => readmeSnippet(),
         js: () => jsSnippet('all')
-      }));
+      }),
+      tryForm());
   },
 
   'readme': () => h('div', { class: 'page' },
@@ -418,6 +416,8 @@ function tryForm() {
       state.lookup = { status: 'error', message: err instanceof LookupError ? err.message : 'GitHub couldn’t be reached from this page. On the published site this works without signing in.' };
     }
     render();
+    // The form sits below the preview, so bring the visitor's own cards into view.
+    if (state.lookup.status === 'done') $('.block')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   } },
     h('label', { class: 'try-field', for: 'try-username' }, h('span', {}, 'github.com/'), input),
     button);
