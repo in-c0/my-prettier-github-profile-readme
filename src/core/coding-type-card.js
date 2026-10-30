@@ -20,7 +20,7 @@ export function renderCodingType(p, opts = {}) {
 
   // Left: name, evidence line, trait chips.
   const leftW = 410;
-  parts.push(`<text x="${P}" y="40" font-size="12" class="muted">Coding type</text>`);
+  parts.push(`<text x="${P}" y="40" font-size="11" font-weight="600" letter-spacing="1.2" class="subtle">CODING TYPE</text>`);
   parts.push(`<text class="name" x="${P}" y="76" font-size="28" font-weight="650" letter-spacing="-0.5">${esc(p.name || 'Builder')}</text>`);
   wrap(p.summary, 12.5, leftW - P, 2).forEach((line, i) => {
     parts.push(`<text x="${P}" y="${104 + i * 18}" font-size="12.5" class="muted">${esc(line)}</text>`);
@@ -28,16 +28,18 @@ export function renderCodingType(p, opts = {}) {
   let cx = P;
   const chipY = 152;
   for (const trait of p.traits || []) {
-    const label = trait.key === 'lang' ? trait.label : `${trait.label} · ${trait.detail}`;
+    const label = trait.key === 'lang' ? trait.label : `${trait.label} · ${trait.detail.replace(/^commits across /, '')}`;
     const w = textWidth(label, 11, true) + 20;
     if (cx + w > leftW + P) break;
     parts.push(`<g class="chip"><rect x="${cx}" y="${chipY}" width="${round(w)}" height="24" rx="12" fill="${t.surface}" stroke="${t.border}"/>` +
       `<text x="${cx + 10}" y="${chipY + 16}" font-size="11" class="mono">${esc(label)}</text></g>`);
     cx += w + 6;
   }
-  const basis = [`${p.total.toLocaleString('en-US')} commits in 12 months`];
-  if (p.sample) basis.push(`hours from ${p.sample.toLocaleString('en-US')} commits`);
-  basis.push(p.timezone);
+  const mon = d => { const x = new Date(d + 'T00:00:00Z'); return x.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' }) + ' ' + String(x.getUTCFullYear()).slice(2); };
+  const city = String(p.timezone).split('/').pop().replace(/_/g, ' ');
+  const basis = [`${p.total.toLocaleString('en-US')} commits`, `${mon(p.from)}–${mon(p.to)}`];
+  if (p.sample) basis.push(`hours from ${p.sample.toLocaleString('en-US')}`);
+  basis.push(city + (p.offset ? ` ${p.offset}` : ''));
   parts.push(`<text x="${P}" y="${height - 22}" font-size="10" class="mono subtle">${esc(basis.join(' · '))}</text>`);
 
   // Right: 24h clock.
@@ -59,9 +61,9 @@ export function renderCodingType(p, opts = {}) {
       const x1 = ox + Math.cos(a) * (r0 + len), y1 = oy + Math.sin(a) * (r0 + len);
       parts.push(`<line class="ray" style="animation-delay:${animate ? 200 + h * 30 : 0}ms" x1="${round(x0)}" y1="${round(y0)}" x2="${round(x1)}" y2="${round(y1)}" stroke="${accent}" stroke-opacity="${inWindow(h) ? 1 : 0.38}" stroke-width="7" stroke-linecap="round"/>`);
     });
-    const peak = p.hours.indexOf(max);
-    parts.push(`<text x="${ox}" y="${oy + 2}" font-size="14" font-weight="600" text-anchor="middle">${String(peak).padStart(2, '0')}h</text>`);
-    parts.push(`<text x="${ox}" y="${oy + 15}" font-size="9" text-anchor="middle" class="mono subtle">peak</text>`);
+    const centre = p.time?.center ? p.time.center.slice(0, 2) : String(p.hours.indexOf(max)).padStart(2, '0');
+    parts.push(`<text x="${ox}" y="${oy + 2}" font-size="14" font-weight="600" text-anchor="middle">${centre}h</text>`);
+    parts.push(`<text x="${ox}" y="${oy + 15}" font-size="9" text-anchor="middle" class="mono subtle">${p.time?.key === 'any' ? 'spread' : 'centre'}</text>`);
   } else {
     parts.push(`<text x="${ox}" y="${oy + 4}" font-size="10" text-anchor="middle" class="mono subtle">no hour data</text>`);
   }
@@ -74,7 +76,7 @@ export function renderCodingType(p, opts = {}) {
   p.weekdays.forEach((v, i) => {
     const hgt = v ? 4 + (v / wmax) * 52 : 2;
     const x = bx + i * colW + colW * 0.2;
-    parts.push(`<rect class="bar" style="animation-delay:${animate ? 300 + i * 50 : 0}ms" x="${round(x)}" y="${round(108 - hgt)}" width="${round(colW * 0.6)}" height="${round(hgt)}" rx="2" fill="${i >= 5 ? t.fork : accent}" fill-opacity="${v ? 0.9 : 0.25}"/>`);
+    parts.push(`<rect class="bar" style="animation-delay:${animate ? 300 + i * 50 : 0}ms" x="${round(x)}" y="${round(108 - hgt)}" width="${round(colW * 0.6)}" height="${round(hgt)}" rx="2" fill="${i >= 5 ? t.fork : accent}" fill-opacity="${v === wmax ? 1 : v ? 0.5 : 0.2}"/>`);
     parts.push(`<text x="${round(bx + i * colW + colW / 2)}" y="122" font-size="9.5" text-anchor="middle" class="mono subtle">${DAYS[i]}</text>`);
   });
   const langs = p.languages || [];

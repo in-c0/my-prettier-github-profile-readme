@@ -19,25 +19,29 @@ export function analyzeCodingType(data, { now = data?.generatedAt || Date.now() 
   }
   const hours = habits.hours && habits.hours.some(Boolean) ? habits.hours : null;
 
-  // Time of day.
+  // Time of day: circular mean of commit hours, so 23:00 and 01:00 count as the same night.
   const WINDOWS = [
-    { key: 'early', label: 'Early-bird', range: [5, 10], phrase: 'mornings (5–10am)' },
-    { key: 'day', label: 'Daytime', range: [10, 17], phrase: 'working hours (10am–5pm)' },
-    { key: 'evening', label: 'Evening', range: [17, 22], phrase: 'evenings (5–10pm)' },
-    { key: 'night', label: 'Night-owl', range: [22, 29], phrase: 'late nights (10pm–5am)' }
+    { key: 'early', label: 'Early-bird', from: 5, to: 10 },
+    { key: 'day', label: 'Daylight', from: 10, to: 17 },
+    { key: 'evening', label: 'Twilight', from: 17, to: 22 },
+    { key: 'night', label: 'Night-owl', from: 22, to: 29 }
   ];
   let time = null;
   if (hours) {
-    const sum = hours.reduce((a, b) => a + b, 0) || 1;
-    const shares = WINDOWS.map(w => {
-      let n = 0;
-      for (let h = w.range[0]; h < w.range[1]; h++) n += hours[h % 24];
-      return { ...w, share: n / sum };
-    });
-    const top = shares.reduce((a, b) => (b.share > a.share ? b : a));
-    time = top.share < 0.38
-      ? { key: 'any', label: 'Around-the-clock', share: top.share, phrase: 'no single part of the day' }
-      : top;
+    let sx = 0, sy = 0, n = 0;
+    hours.forEach((v, h) => { const a = (h + 0.5) / 24 * Math.PI * 2; sx += Math.cos(a) * v; sy += Math.sin(a) * v; n += v; });
+    const R = n ? Math.hypot(sx, sy) / n : 0;                       // 0 = spread evenly, 1 = one hour
+    const mean = ((Math.atan2(sy, sx) / (Math.PI * 2)) * 24 + 24) % 24;
+    const meanHour = Math.floor(mean);
+    const w = WINDOWS.find(x => (meanHour >= x.from && meanHour < x.to) || (meanHour + 24 >= x.from && meanHour + 24 < x.to));
+    // Share of commits within three hours either side of the centre, for the evidence line.
+    let near = 0;
+    for (let d = -3; d <= 3; d++) near += hours[(meanHour + d + 24) % 24];
+    const share = n ? near / n : 0;
+    const clock = String(meanHour).padStart(2, '0') + ':00';
+    time = R < 0.18
+      ? { key: 'any', label: 'Round-the-clock', mean, R, share, center: clock, range: null }
+      : { ...w, mean, R, share, center: clock, range: [meanHour - 3, meanHour + 4] };
   }
 
   // Rhythm: how concentrated commits are, and weekend share.
@@ -49,11 +53,14 @@ export function analyzeCodingType(data, { now = data?.generatedAt || Date.now() 
   const burst = total ? daily.slice(0, topN).reduce((a, b) => a + b, 0) / total : 0;
   const wsum = weekdays.reduce((a, b) => a + b, 0) || 1;
   const weekend = (weekdays[5] + weekdays[6]) / wsum;
+  // Weekly regularity: share of the year's weeks with at least one commit.
+  const weeks = new Set(commits.map(e => Math.floor(new Date(e.date + 'T00:00:00Z') / (7 * DAY))));
+  const weekShare = weeks.size / 52;
   let rhythm;
-  if (weekend >= 0.45) rhythm = { key: 'weekender', label: 'Weekender', detail: `${pct(weekend)} of commits on weekends` };
-  else if (burst >= 0.45) rhythm = { key: 'sprinter', label: 'Sprinter', detail: `${pct(burst)} of commits on the busiest 10% of days` };
-  else if (activeDays >= 120) rhythm = { key: 'steady', label: 'Marathoner', detail: `active on ${activeDays} days this year` };
-  else rhythm = { key: 'regular', label: 'Builder', detail: `active on ${activeDays} days this year` };
+  if (weekend >= 0.4) rhythm = { key: 'weekender', label: 'Weekender', detail: `${pct(weekend)} of commits on weekends` };
+  else if (burst >= 0.45) rhythm = { key: 'sprinter', label: 'Sprinter', detail: `${pct(burst)} of commits land on the busiest 10% of days` };
+  else if (activeDays >= 150) rhythm = { key: 'marathoner', label: 'Marathoner', detail: `commits on ${activeDays} days this year` };
+  else rhythm = { key: 'pulse', label: 'Pulse', detail: `commits in ${weeks.size} of the last 52 weeks` };
 
   // Breadth and curiosity.
   const repoCommits = new Map();
@@ -67,16 +74,21 @@ export function analyzeCodingType(data, { now = data?.generatedAt || Date.now() 
       : { key: 'focused', label: 'Focused', detail: `commits across ${repoCount} repos` };
   const curiosity = stars >= 96 ? { key: 'collector', label: 'Collector', detail: `${stars} repos starred this year` } : null;
 
-  const languages = (habits.languages || []).filter(l => l.name).slice(0, 5);
-  const name = [time && time.key !== 'any' ? time.label : time ? 'Around-the-clock' : null, rhythm.label].filter(Boolean).join(' ');
+  const languages = (habits.languages || []).filter(l => l.name).slice(0, 6);
+  const polyglot = languages.length >= 4 ? { key: 'polyglot', label: 'Polyglot', detail: `${languages.length} languages` } : null;
+  const enough = total >= 30;
+  const name = !enough ? 'Not enough data yet' : [time ? time.label : null, rhythm.label].filter(Boolean).join(' ');
   const lines = [];
-  if (time) lines.push(time.key === 'any' ? 'Commits spread across the whole day' : `${pct(time.share)} of commits land in ${time.phrase}`);
-  lines.push(cap(rhythm.detail));
+  if (enough && time) lines.push(time.key === 'any' ? 'Commits spread across the whole day' : `Commits centre on ${time.center}`);
+  if (enough) lines.push(cap(rhythm.detail));
+  else lines.push(`Only ${total} commits in the last 12 months — the type appears from 30.`);
+  const first = commits.reduce((m, e) => (e.date < m ? e.date : m), commits[0]?.date || yearAgo);
   return {
-    name, time, rhythm, breadth, curiosity, languages, hours, weekdays,
-    total, activeDays, sample: habits.sample || 0, timezone: habits.timezone || 'UTC',
+    name, enough, time, rhythm, breadth, curiosity, languages, hours, weekdays, weekShare,
+    total, activeDays, sample: habits.sample || 0, timezone: habits.timezone || 'UTC', offset: habits.offset || '',
+    from: first, to: new Date(now).toISOString().slice(0, 10),
     summary: lines.join(' · '),
-    traits: [breadth, curiosity, languages[0] && { key: 'lang', label: languages[0].name, detail: 'most-committed language' }].filter(Boolean)
+    traits: enough ? [breadth, polyglot || (languages[0] && { key: 'lang', label: languages[0].name, detail: 'most-committed language' }), curiosity].filter(Boolean) : []
   };
 }
 
@@ -95,5 +107,7 @@ export function habitsFromTimestamps(timestamps, timeZone = 'UTC') {
     hours[Number(parts.hour) % 24]++;
     weekdays[W[parts.weekday]]++;
   }
-  return { hours, weekdays, sample: timestamps.length, timezone: timeZone };
+  let offset = '';
+  try { offset = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find(p => p.type === 'timeZoneName')?.value.replace('GMT', 'UTC') || ''; } catch {}
+  return { hours, weekdays, sample: timestamps.length, timezone: timeZone, offset };
 }
