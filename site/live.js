@@ -32,7 +32,7 @@ async function paged(path, accept, pages) {
 export async function lookupProfile(login, { onProgress = () => {} } = {}) {
   login = login.trim().replace(/^@/, '').replace(/^https?:\/\/github\.com\//, '').split('/')[0];
   if (!/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i.test(login)) throw new LookupError('That isn’t a valid GitHub username.');
-  const key = 'pp-live2-' + login.toLowerCase();
+  const key = 'pp-live3-' + login.toLowerCase();
   try {
     const cached = JSON.parse(localStorage.getItem(key) || 'null');
     if (cached && Date.now() - cached.at < 36e5) return cached.data;
@@ -63,7 +63,7 @@ export async function lookupProfile(login, { onProgress = () => {} } = {}) {
   }));
   const events = [
     ...repos.map(r => ({ type: r.fork ? 'fork' : 'repo', date: r.created_at.slice(0, 10), repo: r.full_name })),
-    ...stars.filter(s => s.starred_at).map(s => ({ type: 'star', date: s.starred_at.slice(0, 10), repo: s.repo.full_name })),
+    ...stars.filter(s => s.starred_at).map(s => ({ type: 'star', date: s.starred_at.slice(0, 10), repo: s.repo.full_name, topics: (s.repo.topics || []).slice(0, 8), lang: s.repo.language || undefined })),
     ...[...perDay].map(([k, count]) => { const [repo, date] = k.split('|'); return { type: 'commit', date, repo, count }; })
   ].sort((a, b) => b.date.localeCompare(a.date));
   // Hour/weekday habits in the visitor's own time zone; languages from the sampled repos.

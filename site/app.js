@@ -7,6 +7,8 @@ import { renderGallery } from '../src/core/gallery.js';
 import { lookupProfile, LookupError } from './live.js';
 import { analyzeCodingType } from '../src/core/coding-type.js';
 import { renderCodingType } from '../src/core/coding-type-card.js';
+import { analyzeCuriosity, INTERESTS } from '../src/core/curiosity.js';
+import { renderCuriosity } from '../src/core/curiosity-card.js';
 
 const REPO = 'in-c0/my-prettier-github-profile-readme';
 const RAW = `https://raw.githubusercontent.com/${REPO}/output`;
@@ -165,6 +167,7 @@ const pages = {
           const wrap = h('div', { style: 'display:grid;gap:12px;width:100%;max-width:840px' });
           wrap.append(activityView(theme, ctx, introActivity));
           wrap.append(h('div', { class: 'wide', html: renderCodingType(analyzeCodingType(subject().data), { theme, id: nextId('c') }) }));
+          wrap.append(h('div', { class: 'wide', html: renderCuriosity(analyzeCuriosity(subject().data), { theme, id: nextId('u') }) }));
           if (!state.guest && state.config?.collected?.length) wrap.append(galleryStage(theme));
           const rest = h('div', { style: 'display:grid;gap:12px', html: headerSVG(theme) });
           if (!state.guest) rest.append(projectGrid(theme, featured));
@@ -271,6 +274,22 @@ const pages = {
       ['Cadence', 'Weekender · Sprinter · Marathoner · Pulse', '40%+ of commits on weekends; 45%+ on the busiest 10% of days; 150+ active days; otherwise Pulse (weeks with commits).'],
       ['Traits', 'Explorer · Deep diver · Focused · Polyglot · Collector', '15+ repos with commits; one repo ≥50%; 4+ languages; ≥96 stars in a year. Under 30 commits the card says so instead of guessing.'],
       ['Data', 'habits.hours / weekdays / languages', 'The build samples your own commits from your 25 busiest public repos this year. Only histograms are published.']
+    ]
+  }),
+
+  curiosity: () => componentPage({
+    title: 'Curiosity',
+    lead: 'What you star, grouped into interests month by month. The tinted band is the last 90 days, so a shift in attention shows at a glance.',
+    block: previewBlock({
+      draw: theme => `<div class="wide" style="width:100%;max-width:840px">${renderCuriosity(analyzeCuriosity(subject().data), { theme, id: nextId('u') })}</div>`,
+      readme: () => picture('curiosity', 'Curiosity: what I star, month by month', 'https://profile.ava.kim/#curiosity', '100%'),
+      js: () => jsSnippet('curiosity')
+    }),
+    options: [
+      ['Interests', INTERESTS.map(([l]) => l).join(' · '), 'Each starred repo goes to the interest whose keywords best match its name words, topics and language. Unmatched repos are left out.'],
+      ['Headline', 'Lately: A, B', 'The two interests with the most stars in the last 90 days.'],
+      ['Rising', 'X rising (a → b)', 'The interest whose share grew most from the earlier nine months to the last 90 days (at least 3 recent stars, +8 points).'],
+      ['interests (JS)', '[label, keywords[]][]', 'Pass your own list to analyzeCuriosity(data, { interests }).']
     ]
   }),
 
@@ -572,6 +591,7 @@ function jsSnippet(kind) {
     header: `import { renderHeader } from '${base}/cards.js';\nimport { computeStats } from '${base}/stats.js';\n\nel.innerHTML = renderHeader(data.user, computeStats(data), { theme: 'dark' });`,
     project: `import { renderProject } from '${base}/cards.js';\n\nel.innerHTML = renderProject({\n  title: 'Paper UI',\n  summary: 'Expressive, reusable interface components.',\n  url: 'https://github.com/in-c0/paper-ui',\n  image: '/paper-ui.jpg'\n});`,
     coding: `import { analyzeCodingType } from '${base}/coding-type.js';\nimport { renderCodingType } from '${base}/coding-type-card.js';\n\nel.innerHTML = renderCodingType(analyzeCodingType(data), { theme: 'dark' });`,
+    curiosity: `import { analyzeCuriosity } from '${base}/curiosity.js';\nimport { renderCuriosity } from '${base}/curiosity-card.js';\n\nel.innerHTML = renderCuriosity(analyzeCuriosity(data), { theme: 'light' });`,
     gallery: `import { renderGallery } from '${base}/gallery.js';\n\nel.innerHTML = renderGallery([\n  { title: 'Electric traces', src: '/traces.jpg', width: 392, height: 203, video: true },\n  …\n], { columns: 4 });`,
     activity: `import { renderActivity } from '${base}/activity.js';\n\n// data = { events: [{ type: 'star', date: '2026-10-27', repo: 'owner/name' }, …] }\nel.innerHTML = renderActivity(data, { range: '12m', end: '2025-06-30', includePrivate: false });`
   };

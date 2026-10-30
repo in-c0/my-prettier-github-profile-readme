@@ -78,3 +78,17 @@ test('coding type names the busiest time window and rhythm with their numbers', 
   assert.match(p.name, /^Night-owl /);
   assert.match(p.summary, /\d+% of commits/);
 });
+
+test('curiosity groups stars into interests and reports the last 90 days', async () => {
+  const { analyzeCuriosity, interestOf } = await import('../src/core/curiosity.js');
+  assert.equal(interestOf({ repo: 'zhuyansen/awesome-claude-video-skills' }), 'AI agents');
+  assert.equal(interestOf({ repo: 'x/y', topics: ['mujoco', 'robotics'] }), 'Physics & robotics');
+  const events = [];
+  for (let i = 0; i < 6; i++) events.push({ type: 'star', date: '2026-10-2' + i, repo: 'a/cad-' + i, topics: ['cad'] });
+  for (let i = 0; i < 6; i++) events.push({ type: 'star', date: '2026-02-1' + i, repo: 'b/vision-' + i, topics: ['computer-vision'] });
+  const c = analyzeCuriosity({ generatedAt: now, events });
+  assert.equal(c.total, 12);
+  assert.equal(c.lateTotal, 6);
+  assert.match(c.headline, /^Lately: 3D & CAD/);
+  assert.equal(c.rising.label, '3D & CAD');
+});

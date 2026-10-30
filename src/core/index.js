@@ -6,3 +6,5 @@ export { renderGallery, layoutGallery } from './gallery.js';
 export { imageSize } from './image-size.js';
 export { analyzeCodingType, habitsFromTimestamps } from './coding-type.js';
 export { renderCodingType } from './coding-type-card.js';
+export { analyzeCuriosity, interestOf, INTERESTS } from './curiosity.js';
+export { renderCuriosity } from './curiosity-card.js';

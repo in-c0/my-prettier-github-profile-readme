@@ -14,6 +14,8 @@ import { renderGallery } from '../src/core/gallery.js';
 import { imageSize } from '../src/core/image-size.js';
 import { habitsFromTimestamps, analyzeCodingType } from '../src/core/coding-type.js';
 import { renderCodingType } from '../src/core/coding-type-card.js';
+import { analyzeCuriosity } from '../src/core/curiosity.js';
+import { renderCuriosity } from '../src/core/curiosity-card.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]);
@@ -174,7 +176,7 @@ async function collect() {
   const events = [
     ...repos.map(r => ({ type: r.fork ? 'fork' : 'repo', date: r.created_at.slice(0, 10), repo: r.full_name })),
     ...privateRepos.map(r => ({ type: 'repo', date: r.created_at.slice(0, 10), repo: null, private: true })),
-    ...stars.filter(s => s.starred_at).map(s => ({ type: 'star', date: s.starred_at.slice(0, 10), repo: s.repo.full_name })),
+    ...stars.filter(s => s.starred_at).map(s => ({ type: 'star', date: s.starred_at.slice(0, 10), repo: s.repo.full_name, topics: (s.repo.topics || []).slice(0, 8), lang: s.repo.language || undefined })),
     ...commits
   ].sort((a, b) => b.date.localeCompare(a.date));
   const habits = await collectHabits(repos, commits);
@@ -218,6 +220,10 @@ for (const p of config.projects || []) {
 if (config.codingType !== false) {
   const profile = analyzeCodingType(data);
   for (const theme of ['light', 'dark']) await write(`coding-type-${theme}.svg`, renderCodingType(profile, { theme }));
+}
+if (config.curiosity !== false) {
+  const c = analyzeCuriosity(data);
+  for (const theme of ['light', 'dark']) await write(`curiosity-${theme}.svg`, renderCuriosity(c, { theme }));
 }
 if (config.collected?.length) {
   await mkdir(resolve(outDir, 'thumbs'), { recursive: true });
