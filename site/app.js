@@ -151,25 +151,21 @@ function legend() {
 /* ---------- pages ---------- */
 const pages = {
   intro: () => {
-    const username = state.config?.username || 'in-c0';
     const featured = (state.config?.projects || []).slice(0, 3);
+    showHeroPop();
     return h('div', { class: 'page' },
-      h('section', { class: 'hero' },
-        h('span', { class: 'badge' }, h('i'), window.__PP_INLINE?.badge || (state.live ? 'Live data · refreshed daily' : 'Sample data')),
-        h('h1', {}, 'A prettier profile README.'),
-        h('p', { class: 'lead' }, 'Four components, rendered as SVG and refreshed by a GitHub Action. Paste one block of markdown and they work on github.com.'),
-      ),
+      h('h1', { class: 'sr-only' }, 'Prettier Profile'),
       previewBlock({
         controls: (ctx, redraw) => activityControls(introActivity, redraw),
         onStageClick: activityClick(introActivity),
         draw: (theme, ctx) => {
+          // Activity and the gallery lead; the header and projects follow.
           const wrap = h('div', { style: 'display:grid;gap:12px;width:100%;max-width:840px' });
-          wrap.innerHTML = headerSVG(theme);
           wrap.append(activityView(theme, ctx, introActivity));
-          if (!state.guest) {
-            wrap.append(projectGrid(theme, featured));
-            if (state.config?.collected?.length) wrap.append(galleryStage(theme));
-          }
+          if (!state.guest && state.config?.collected?.length) wrap.append(galleryStage(theme));
+          const rest = h('div', { style: 'display:grid;gap:12px', html: headerSVG(theme) });
+          if (!state.guest) rest.append(projectGrid(theme, featured));
+          wrap.append(rest);
           return wrap;
         },
         readme: () => readmeSnippet(),
@@ -395,6 +391,23 @@ function activityBlock(st) {
 }
 const utcToday = () => { const d = new Date(subject().data?.generatedAt || Date.now()); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); };
 
+/* ---------- intro popup (the old hero) ---------- */
+function showHeroPop() {
+  if (document.querySelector('.hero-pop')) return;
+  try { if (localStorage.getItem('pp-hero-dismissed')) return; } catch {}
+  const pop = h('aside', { class: 'hero-pop', role: 'complementary', 'aria-label': 'About Prettier Profile' },
+    h('button', { class: 'icon-btn hero-pop-close', type: 'button', 'aria-label': 'Close', onclick: () => {
+      try { localStorage.setItem('pp-hero-dismissed', '1'); } catch {}
+      pop.classList.add('leaving');
+      setTimeout(() => pop.remove(), 220);
+    }, html: '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' }),
+    h('span', { class: 'badge' }, h('i'), window.__PP_INLINE?.badge || (state.live ? 'Live data · refreshed daily' : 'Sample data')),
+    h('p', { class: 'hero-pop-title' }, 'A prettier profile README.'),
+    h('p', { class: 'hero-pop-lead' }, 'Four components as SVG, refreshed daily by a GitHub Action. One block of markdown and they work on github.com.'),
+    h('a', { class: 'hero-pop-link', href: '#readme' }, 'Embed in your README →'));
+  document.body.append(pop);
+}
+
 /* ---------- try your own username ---------- */
 function tryForm() {
   const input = h('input', { id: 'try-username', type: 'text', placeholder: 'username', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', value: state.guest?.user.login || '', 'aria-label': 'GitHub username' });
@@ -555,7 +568,7 @@ function render() {
   }
   $('#page').replaceChildren(state.data ? page() : h('p', { class: 'lead' }, 'Loading…'));
 }
-addEventListener('hashchange', () => { document.querySelectorAll('dialog.lightbox').forEach(d => d.remove()); render(); scrollTo(0, 0); });
+addEventListener('hashchange', () => { document.querySelectorAll('dialog.lightbox').forEach(d => d.remove()); if (!/^#?(intro)?$/.test(location.hash)) document.querySelector('.hero-pop')?.remove(); render(); scrollTo(0, 0); });
 
 // A bundled single-file build can inline its data instead of fetching it.
 const inline = window.__PP_INLINE;

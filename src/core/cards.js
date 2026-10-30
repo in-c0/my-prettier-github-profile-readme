@@ -33,7 +33,12 @@ export function renderProject(p, opts = {}) {
   parts.push(`<line x1="1" y1="${mediaH + 0.5}" x2="${width - 1}" y2="${mediaH + 0.5}" stroke="${t.hairline}"/>`);
   const tag = p.tag ? truncate(p.tag, 10, 90, true) : '';
   const titleMax = width - P * 2 - (tag ? textWidth(tag, 10, true) + 12 : 0);
-  parts.push(`<text x="${P}" y="${mediaH + 26}" font-size="14" font-weight="600">${esc(truncate(p.title, 14, titleMax))}</text>`);
+  // "Name (aside)" renders the aside smaller and muted, so long former names still fit.
+  const [, main = p.title, aside] = String(p.title).match(/^(.*?)\s*\(([^)]+)\)\s*$/) || [];
+  const mainText = truncate(main, 14, titleMax);
+  const asideText = aside ? truncate(aside, 11, titleMax - textWidth(mainText, 14) - 6) : '';
+  parts.push(`<text x="${P}" y="${mediaH + 26}" font-size="14" font-weight="600">${esc(mainText)}` +
+    (asideText && asideText !== '…' ? `<tspan dx="6" font-size="11" font-weight="400" class="subtle">${esc(asideText)}</tspan>` : '') + `</text>`);
   if (tag) parts.push(`<text x="${width - P}" y="${mediaH + 25}" font-size="10" text-anchor="end" class="mono subtle">${esc(tag.toUpperCase())}</text>`);
   wrap(p.summary, 12, width - P * 2, 2).forEach((line, i) => {
     parts.push(`<text x="${P}" y="${mediaH + 46 + i * 17}" font-size="12" class="muted">${esc(line)}</text>`);
