@@ -17,6 +17,10 @@ GitHub profile cards that look like they belong to a component library. A daily 
 
 </details>
 
+<a href="https://profile.ava.kim/#coding-type"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/coding-type-dark.svg"><img alt="Coding type" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/coding-type-light.svg" width="100%"></picture></a>
+
+<a href="https://profile.ava.kim/#curiosity"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/curiosity-dark.svg"><img alt="Curiosity" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/curiosity-light.svg" width="100%"></picture></a>
+
 <a href="https://profile.ava.kim/#collected"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/collected-dark.svg"><img alt="Collected: a gallery of references" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/collected-light.svg" width="100%"></picture></a>
 
 <a href="https://profile.ava.kim/#header"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/header-dark.svg"><img alt="Profile header" src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/header-light.svg" width="100%"></picture></a>
@@ -33,6 +37,8 @@ GitHub profile cards that look like they belong to a component library. A daily 
 | --- | --- |
 | **Profile header**<br>Avatar, name, one line, three counters | <img src="assets/screenshots/header-light.png" width="380" alt=""> |
 | **Activity arrow**<br>◼ new repo · ◆ fork · ★ star above the line, commits below. `30d` · `3m` · `12m` · `all` | <img src="assets/screenshots/activity-light.png" width="380" alt=""> |
+| **Coding type**<br>An archetype like *Daylight Sprinter* from commit hours, rhythm and breadth, with the numbers behind it | <img src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/coding-type-light.svg" width="380" alt=""> |
+| **Curiosity**<br>What you star, grouped into interests month by month; the last 90 days highlighted | <img src="https://raw.githubusercontent.com/in-c0/my-prettier-github-profile-readme/output/curiosity-light.svg" width="380" alt=""> |
 | **Project card**<br>Screenshot or dotted cover, two lines, domain | <img src="assets/screenshots/projects-light.png" width="380" alt=""> |
 | **Collected**<br>Masonry gallery of references, video stills marked | <img src="assets/screenshots/collected-light.png" width="380" alt=""> |
 
