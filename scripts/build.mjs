@@ -12,6 +12,8 @@ import { renderProject, renderHeader } from '../src/core/cards.js';
 import { computeStats, featuredRepos } from '../src/core/stats.js';
 import { renderGallery } from '../src/core/gallery.js';
 import { imageSize } from '../src/core/image-size.js';
+import { habitsFromTimestamps, analyzeCodingType } from '../src/core/coding-type.js';
+import { renderCodingType } from '../src/core/coding-type-card.js';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]);
@@ -128,6 +130,29 @@ async function loadImage(src, maxWidth = 0) {
 }
 const dataUri = async src => (await loadImage(src))?.uri || '';
 
+// Commit hours need real timestamps, which the contributions API doesn't give. Sample the
+// user's own commits from their busiest public repos this year; histograms only, no messages.
+async function collectHabits(repos, commits) {
+  const since = new Date(Date.now() - 365 * 864e5).toISOString();
+  const perRepo = new Map();
+  for (const c of commits) if (c.repo && !c.private && c.date >= since.slice(0, 10)) perRepo.set(c.repo, (perRepo.get(c.repo) || 0) + (c.count || 1));
+  const busiest = [...perRepo].sort((a, b) => b[1] - a[1]).slice(0, config.habits?.repos ?? 25).map(([r]) => r);
+  const stamps = [];
+  for (const full of busiest) {
+    try {
+      const list = await paged(`/repos/${full}/commits?author=${username}&since=${since}`, null, 3);
+      for (const c of list) if (c.commit?.author?.date) stamps.push(c.commit.author.date);
+    } catch { /* empty or moved repos */ }
+  }
+  const tz = config.timezone || 'UTC';
+  const habits = habitsFromTimestamps(stamps, tz);
+  const lang = new Map(repos.filter(r => !r.fork).map(r => [r.full_name, r.language]));
+  const byLang = new Map();
+  for (const [repo, n] of perRepo) { const l = lang.get(repo); if (l) byLang.set(l, (byLang.get(l) || 0) + n); }
+  habits.languages = [...byLang].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, commits]) => ({ name, commits }));
+  return habits;
+}
+
 async function collect() {
   if (args.offline) return JSON.parse(await readFile(resolve(args.offline), 'utf8'));
   const user = await rest(`/users/${username}`);
@@ -152,8 +177,10 @@ async function collect() {
     ...stars.filter(s => s.starred_at).map(s => ({ type: 'star', date: s.starred_at.slice(0, 10), repo: s.repo.full_name })),
     ...commits
   ].sort((a, b) => b.date.localeCompare(a.date));
+  const habits = await collectHabits(repos, commits);
   return {
     generatedAt: new Date().toISOString(),
+    habits,
     user: {
       login: user.login, name: user.name || user.login, bio: user.bio || '', url: user.html_url,
       blog: user.blog, followers: user.followers, publicRepos: user.public_repos, avatarUrl: user.avatar_url
@@ -187,6 +214,10 @@ for (const theme of ['light', 'dark']) {
 for (const p of config.projects || []) {
   const image = await dataUri(p.image);
   for (const theme of ['light', 'dark']) await write(`project-${p.id}-${theme}.svg`, renderProject({ ...p, image }, { theme }));
+}
+if (config.codingType !== false) {
+  const profile = analyzeCodingType(data);
+  for (const theme of ['light', 'dark']) await write(`coding-type-${theme}.svg`, renderCodingType(profile, { theme }));
 }
 if (config.collected?.length) {
   await mkdir(resolve(outDir, 'thumbs'), { recursive: true });

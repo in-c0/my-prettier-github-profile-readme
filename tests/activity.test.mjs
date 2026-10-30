@@ -65,3 +65,16 @@ test('gallery layout ends every column on the same edge', async () => {
   const values = [...bottoms.values()];
   assert.ok(Math.max(...values) - Math.min(...values) < 0.01);
 });
+
+test('coding type names the busiest time window and rhythm with their numbers', async () => {
+  const { analyzeCodingType, habitsFromTimestamps } = await import('../src/core/coding-type.js');
+  const stamps = [];
+  for (let i = 0; i < 40; i++) stamps.push(`2026-10-${String(6 + (i % 20)).padStart(2, '0')}T13:30:00Z`); // 00:30 Sydney (AEDT, after the DST switch)
+  const habits = habitsFromTimestamps(stamps, 'Australia/Sydney');
+  assert.equal(habits.hours[0], 40);
+  const events = [{ type: 'commit', date: '2026-10-02', repo: 'me/a', count: 50 }, { type: 'commit', date: '2026-09-01', repo: 'me/b', count: 2 }];
+  const p = analyzeCodingType({ generatedAt: now, events, habits });
+  assert.equal(p.time.key, 'night');
+  assert.match(p.name, /^Night-owl /);
+  assert.match(p.summary, /\d+% of commits/);
+});

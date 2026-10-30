@@ -38,5 +38,6 @@
     { "id": "creative-02", "title": "A camera on the wrist", "summary": "A concept collage for a wrist-mounted camera with a scope and tactile controls.", "url": "https://github.com/user-attachments/assets/d3b6a0cd-71c2-4278-8c97-88d1a1641335", "image": "assets/thumbs/creative-02.jpg" },
     { "id": "creative-03", "title": "Physical feedback in VR", "summary": "A reference collage exploring recoil and embodied feedback in simulated training.", "url": "https://github.com/user-attachments/assets/6c3700c7-b2fb-4bf6-9b1e-f2d6d44cf9ff", "image": "assets/thumbs/creative-03.jpg" },
     { "id": "creative-04", "title": "A charged gauntlet", "summary": "A glowing plasma globe meets an ornate wearable prop inspired by Arcane.", "url": "https://github.com/user-attachments/assets/f6d969e4-3f76-46c3-b0f4-0600afcb51ae", "image": "assets/thumbs/creative-04.jpg" }
-  ]
+  ],
+  "timezone": "Australia/Sydney"
 }

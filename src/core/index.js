@@ -4,3 +4,5 @@ export { computeStats, featuredRepos } from './stats.js';
 export { THEMES, FONT_SANS, FONT_MONO } from './tokens.js';
 export { renderGallery, layoutGallery } from './gallery.js';
 export { imageSize } from './image-size.js';
+export { analyzeCodingType, habitsFromTimestamps } from './coding-type.js';
+export { renderCodingType } from './coding-type-card.js';

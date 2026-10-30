@@ -5,6 +5,8 @@ import { THEMES } from '../src/core/tokens.js';
 import { GLYPH } from '../src/core/svg.js';
 import { renderGallery } from '../src/core/gallery.js';
 import { lookupProfile, LookupError } from './live.js';
+import { analyzeCodingType } from '../src/core/coding-type.js';
+import { renderCodingType } from '../src/core/coding-type-card.js';
 
 const REPO = 'in-c0/my-prettier-github-profile-readme';
 const RAW = `https://raw.githubusercontent.com/${REPO}/output`;
@@ -162,6 +164,7 @@ const pages = {
           // Activity and the gallery lead; the header and projects follow.
           const wrap = h('div', { style: 'display:grid;gap:12px;width:100%;max-width:840px' });
           wrap.append(activityView(theme, ctx, introActivity));
+          wrap.append(h('div', { class: 'wide', html: renderCodingType(analyzeCodingType(subject().data), { theme, id: nextId('c') }) }));
           if (!state.guest && state.config?.collected?.length) wrap.append(galleryStage(theme));
           const rest = h('div', { style: 'display:grid;gap:12px', html: headerSVG(theme) });
           if (!state.guest) rest.append(projectGrid(theme, featured));
@@ -254,6 +257,22 @@ const pages = {
       ]
     });
   },
+
+  'coding-type': () => componentPage({
+    title: 'Coding type',
+    lead: 'An archetype from when you commit, how bursty you are and how widely you roam — each label shown with the number behind it.',
+    block: previewBlock({
+      draw: theme => `<div class="wide" style="width:100%;max-width:840px">${renderCodingType(analyzeCodingType(subject().data), { theme, id: nextId('c') })}</div>`,
+      readme: () => picture('coding-type', 'Coding type', 'https://profile.ava.kim/#coding-type', '100%'),
+      js: () => jsSnippet('coding')
+    }),
+    options: [
+      ['Time of day', 'Early-bird · Daytime · Evening · Night-owl · Around-the-clock', 'The window holding the most commits (by author time, in config.timezone). Under 38% everywhere → Around-the-clock.'],
+      ['Rhythm', 'Weekender · Sprinter · Marathoner · Builder', '≥45% of commits on weekends; ≥45% on the busiest 10% of days; 120+ active days; otherwise Builder.'],
+      ['Traits', 'Explorer · Deep diver · Focused · Collector', '15+ repos with commits; one repo ≥50%; ≥96 stars in a year.'],
+      ['Data', 'habits.hours / weekdays / languages', 'The build samples your own commits from your 25 busiest public repos this year. Only histograms are published.']
+    ]
+  }),
 
   collected: () => componentPage({
     title: 'Collected',
@@ -552,6 +571,7 @@ function jsSnippet(kind) {
   const lines = {
     header: `import { renderHeader } from '${base}/cards.js';\nimport { computeStats } from '${base}/stats.js';\n\nel.innerHTML = renderHeader(data.user, computeStats(data), { theme: 'dark' });`,
     project: `import { renderProject } from '${base}/cards.js';\n\nel.innerHTML = renderProject({\n  title: 'Paper UI',\n  summary: 'Expressive, reusable interface components.',\n  url: 'https://github.com/in-c0/paper-ui',\n  image: '/paper-ui.jpg'\n});`,
+    coding: `import { analyzeCodingType } from '${base}/coding-type.js';\nimport { renderCodingType } from '${base}/coding-type-card.js';\n\nel.innerHTML = renderCodingType(analyzeCodingType(data), { theme: 'dark' });`,
     gallery: `import { renderGallery } from '${base}/gallery.js';\n\nel.innerHTML = renderGallery([\n  { title: 'Electric traces', src: '/traces.jpg', width: 392, height: 203, video: true },\n  …\n], { columns: 4 });`,
     activity: `import { renderActivity } from '${base}/activity.js';\n\n// data = { events: [{ type: 'star', date: '2026-10-27', repo: 'owner/name' }, …] }\nel.innerHTML = renderActivity(data, { range: '12m', end: '2025-06-30', includePrivate: false });`
   };
